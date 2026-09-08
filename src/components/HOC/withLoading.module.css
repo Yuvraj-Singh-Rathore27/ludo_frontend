@@ -1,0 +1,105 @@
+.loadingPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 100%;
+    padding: clamp(26px, 4vw, 44px) 18px;
+    color: #fff6e5;
+    text-align: center;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 214, 112, 0.16), transparent 40%),
+        linear-gradient(180deg, rgba(93, 5, 22, 0.32), rgba(15, 1, 7, 0.42));
+}
+
+.spinnerWrap {
+    display: grid;
+    place-items: center;
+    width: 70px;
+    height: 70px;
+    border: 1px solid rgba(255, 214, 112, 0.2);
+    border-radius: 50%;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.03)),
+        rgba(76, 5, 20, 0.58);
+    box-shadow:
+        0 18px 36px rgba(20, 0, 7, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.loadingCopy {
+    display: grid;
+    gap: 4px;
+}
+
+.loadingCopy span {
+    color: #fff8ed;
+    font-size: clamp(16px, 1.6vw, 20px);
+    font-weight: 900;
+}
+
+.loadingCopy p {
+    margin: 0;
+    color: rgba(255, 239, 220, 0.68);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.skeletonRows {
+    display: grid;
+    gap: 8px;
+    width: min(100%, 520px);
+    margin-top: 4px;
+}
+
+.skeletonRows span {
+    display: block;
+    height: 38px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 214, 112, 0.09);
+    border-radius: 9px;
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 214, 112, 0.13), transparent),
+        rgba(68, 8, 18, 0.56);
+    background-size: 220% 100%, auto;
+    animation: shimmer 1.35s ease-in-out infinite;
+}
+
+.skeletonRows span:nth-child(2) {
+    width: 88%;
+    margin-inline: auto;
+    animation-delay: 0.12s;
+}
+
+.skeletonRows span:nth-child(3) {
+    width: 76%;
+    margin-inline: auto;
+    animation-delay: 0.24s;
+}
+
+@keyframes shimmer {
+    from {
+        background-position: 160% 0, 0 0;
+    }
+
+    to {
+        background-position: -60% 0, 0 0;
+    }
+}
+
+@media (max-width: 575px) {
+    .loadingPanel {
+        padding: 24px 14px;
+    }
+
+    .spinnerWrap {
+        width: 62px;
+        height: 62px;
+    }
+
+    .skeletonRows span {
+        height: 34px;
+    }
+}

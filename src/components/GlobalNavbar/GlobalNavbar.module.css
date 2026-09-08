@@ -1,0 +1,729 @@
+/* ═══════════════════════════════════════════════
+   LUDO ARENA — GLOBAL NAVBAR
+═══════════════════════════════════════════════ */
+
+.topbar {
+    --red: #ff1747;
+    --gold: #ffb51f;
+    --radius-md: 10px;
+    --radius-sm: 8px;
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 230px 1fr auto;
+    align-items: center;
+    gap: 22px;
+    min-height: 88px;
+    padding: 0 28px 0 26px;
+    border-bottom: 1px solid rgba(255, 24, 58, 0.3);
+    background: linear-gradient(105deg, rgba(120, 8, 26, 0.55) 0%, rgba(18, 2, 8, 0.78) 50%, rgba(8, 1, 4, 0.88) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow:
+        0 1px 0 rgba(255, 24, 58, 0.22),
+        0 4px 40px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── Brand ── */
+.brandRow {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+}
+
+.logoWrap {
+    flex: 0 0 auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 9px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #780818, #280208);
+}
+
+.logoWrap img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: lighten;
+    filter: drop-shadow(0 0 10px rgba(255, 25, 55, 0.4));
+}
+
+.brandRow strong,
+.brandRow span {
+    display: block;
+    line-height: 0.86;
+}
+
+.brandRow strong {
+    font-size: 29px;
+    font-weight: 1000;
+    letter-spacing: 0.02em;
+    color: #fff;
+}
+
+.brandRow span {
+    margin-top: 8px;
+    color: var(--red);
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.38em;
+}
+
+/* ── Desktop nav ── */
+.nav {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+}
+
+.nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 110px;
+    padding: 0 16px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color 0.18s;
+}
+
+.nav a:hover {
+    color: #fff;
+}
+
+.navDisabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    pointer-events: auto !important;
+}
+
+.nav a.active {
+    color: #fff;
+    background: linear-gradient(180deg, transparent, rgba(255, 23, 71, 0.22));
+    border-bottom: 2px solid var(--gold);
+    box-shadow: 0 18px 30px rgba(255, 8, 42, 0.4);
+}
+
+.navLinkIcon {
+    flex: 0 0 auto;
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    stroke-width: 3.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.75;
+    transition: opacity 0.18s;
+}
+
+.nav a:hover .navLinkIcon,
+.nav a.active .navLinkIcon {
+    opacity: 1;
+}
+
+/* ── Wallet area ── */
+.wallet {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.soundToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 24, 58, 0.38);
+    border-radius: 12px;
+    background: rgba(8, 3, 5, 0.72);
+    color: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.soundToggle:hover {
+    border-color: rgba(255, 24, 58, 0.7);
+    background: rgba(255, 24, 58, 0.12);
+}
+
+.soundToggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    opacity: 0.85;
+}
+
+.coinBox {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-height: 54px;
+    padding: 0;
+    border: 1px solid rgba(255, 181, 31, 0.4);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,181,31,0.08) 0%, rgba(8,3,5,0.92) 100%);
+    color: var(--gold);
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,181,31,0.1);
+}
+
+.coinBox:hover {
+    border-color: rgba(255, 181, 31, 0.72);
+    box-shadow: 0 0 22px rgba(255, 181, 31, 0.18), 0 2px 16px rgba(0,0,0,0.3);
+}
+
+/* ₹ badge on the left */
+.rupeeIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    align-self: stretch;
+    flex-shrink: 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--gold);
+    background: rgba(255, 181, 31, 0.1);
+    border-right: 1px solid rgba(255, 181, 31, 0.18);
+    text-shadow: 0 0 12px rgba(255, 181, 31, 0.5);
+    user-select: none;
+}
+
+/* thin vertical divider (hidden — rupeeIcon border replaces it) */
+.coinDivider { display: none; }
+
+/* balance stack */
+.coinBalances {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 10px;
+    min-width: 0;
+    position: relative;
+}
+
+.coinTotal {
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.coinBlocked {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 150, 30, 0.8);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    transition: font-size 0.18s ease, color 0.18s ease, gap 0.18s ease;
+    cursor: default;
+}
+
+.coinBlocked:hover {
+    font-size: 13px;
+    color: rgba(255, 150, 30, 1);
+    gap: 5px;
+}
+
+.coinBlocked svg {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    opacity: 0.9;
+    transition: width 0.18s ease, height 0.18s ease;
+}
+
+.coinBlocked:hover svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* ── Balance hover tooltip ── */
+.balanceTooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 10, 18, 0.97);
+    border: 1px solid rgba(255, 181, 31, 0.22);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 150px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    z-index: 200;
+    white-space: nowrap;
+}
+
+.coinBox:hover .balanceTooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.balanceTooltipRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.balanceTooltipLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.balanceTooltipValue {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 181, 31, 0.95);
+    font-variant-numeric: tabular-nums;
+}
+
+/* downward arrow pointing to the balance widget */
+.balanceTooltipArrow {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: rgba(10, 10, 18, 0.97);
+    border-right: 1px solid rgba(255, 181, 31, 0.22);
+    border-bottom: 1px solid rgba(255, 181, 31, 0.22);
+}
+
+/* + add button on the right */
+.coinAdd {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    align-self: stretch;
+    flex-shrink: 0;
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.55);
+    border-left: 1px solid rgba(255, 181, 31, 0.15);
+    transition: color 0.18s, background 0.18s;
+}
+
+.coinBox:hover .coinAdd {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 181, 31, 0.08);
+}
+
+/* ── Profile toggle ── */
+.profileToggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 0 14px 0 6px;
+    border: 1.5px solid rgba(255, 24, 58, 0.42);
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 40%, rgba(160, 14, 44, 0.28), transparent 55%), rgba(10, 2, 6, 0.85);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.profileToggle:hover,
+.profileToggleOpen {
+    border-color: rgba(255, 24, 58, 0.8);
+    box-shadow:
+        0 0 0 3px rgba(255, 24, 58, 0.12),
+        0 6px 22px rgba(0, 0, 0, 0.42),
+        0 0 18px rgba(255, 24, 58, 0.2);
+}
+
+.profileAvatarCircle {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 24, 58, 0.65);
+    background: linear-gradient(145deg, rgba(200, 18, 50, 0.85), rgba(80, 4, 18, 0.95));
+    box-shadow: 0 0 12px rgba(255, 24, 58, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+.profileAvatarCircle svg {
+    width: 58%;
+    height: 58%;
+}
+
+.profileToggleName {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.02em;
+}
+
+.profileChevron {
+    width: 14px;
+    height: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+    transition: transform 0.22s;
+}
+
+.profileToggleOpen .profileChevron {
+    transform: rotate(180deg);
+}
+
+.profileWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Profile dropdown ── */
+.profileDropdown {
+    min-width: 220px;
+    padding: 14px;
+    border-radius: var(--radius-md, 10px);
+    border: 1px solid rgba(255, 24, 58, 0.38);
+    background: linear-gradient(145deg, rgba(80, 6, 20, 0.96), rgba(10, 2, 6, 0.98));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 24, 58, 0.1);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownUser {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.dropdownAvatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: 2px solid rgba(255, 24, 58, 0.5);
+    background: linear-gradient(145deg, rgba(180, 20, 50, 0.72), rgba(60, 4, 14, 0.94));
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.dropdownAvatar svg {
+    width: 58%;
+    height: 58%;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.dropdownUser strong {
+    display: block;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.dropdownUser span {
+    display: block;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 12px;
+}
+
+.dropdownDivider {
+    border: none;
+    border-top: 1px solid rgba(255, 24, 58, 0.25);
+    margin: 0 0 10px;
+}
+
+.dropdownProfile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 181, 31, 0.22);
+    border-radius: var(--radius-sm, 8px);
+    background: rgba(255, 181, 31, 0.06);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.18s, border-color 0.18s;
+}
+
+.dropdownProfile:hover {
+    background: rgba(255, 181, 31, 0.14);
+    border-color: rgba(255, 181, 31, 0.5);
+    color: #fff;
+}
+
+.dropdownProfile svg {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+}
+
+.dropdownLogout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 24, 58, 0.3);
+    border-radius: var(--radius-sm, 8px);
+    background: rgba(255, 24, 58, 0.1);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+}
+
+.dropdownLogout:hover {
+    background: rgba(255, 24, 58, 0.22);
+    border-color: rgba(255, 24, 58, 0.6);
+    color: #fff;
+}
+
+.dropdownLogout svg {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+}
+
+/* ── Hamburger (hidden on desktop) ── */
+.menuButton {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border: 1px solid rgba(255, 24, 58, 0.38);
+    border-radius: var(--radius-md, 10px);
+    background: rgba(8, 3, 5, 0.72);
+    cursor: pointer;
+}
+
+.menuButton span {
+    display: block;
+    width: 26px;
+    height: 3px;
+    border-radius: 4px;
+    background: #fff;
+    transition: opacity 0.2s;
+}
+
+/* ── Mobile bottom nav (hidden on desktop) ── */
+.bottomNav {
+    display: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .topbar {
+        grid-template-columns: auto 1fr auto;
+        min-height: 64px;
+        padding: 0 14px;
+        gap: 10px;
+    }
+
+    .nav {
+        display: none;
+    }
+
+    .menuButton {
+        display: flex;
+    }
+
+    /* hide name label next to avatar on tablet */
+    .profileToggleName {
+        display: none;
+    }
+
+    .profileChevron {
+        display: none;
+    }
+
+    /* compact profile toggle */
+    .profileToggle {
+        height: 42px;
+        padding: 0 8px;
+        border-radius: 50%;
+        width: 42px;
+        justify-content: center;
+    }
+
+    /* hide + button on mobile */
+    .coinAdd {
+        display: none;
+    }
+
+    /* compact wallet button */
+    .coinBox {
+        min-height: 44px;
+        border-radius: 10px;
+    }
+
+    .rupeeIcon {
+        width: 34px;
+        font-size: 16px;
+    }
+
+    .coinTotal {
+        font-size: 15px;
+    }
+
+    .coinBlocked {
+        font-size: 9px;
+    }
+
+    .coinBalances {
+        padding: 4px 8px;
+    }
+
+    /* brand — hide "ARENA" text on small screens */
+    .brandRow span {
+        display: none;
+    }
+
+    .brandRow strong {
+        font-size: 20px;
+    }
+
+    .logoWrap {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* ── Mobile bottom nav ── */
+@media (max-width: 900px) {
+    .bottomNav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        height: 62px;
+        align-items: stretch;
+        border-top: 1px solid rgba(255, 24, 58, 0.28);
+        background: linear-gradient(180deg, rgba(14, 2, 8, 0.97) 0%, rgba(6, 1, 4, 0.99) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .bottomNav a {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        transition: color 0.18s;
+        padding: 6px 4px;
+    }
+
+    .bottomNav a:hover {
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .bottomActive {
+        color: #fff !important;
+        position: relative;
+    }
+
+    .bottomActive::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 20%;
+        right: 20%;
+        height: 2px;
+        border-radius: 0 0 3px 3px;
+        background: var(--gold, #ffb51f);
+    }
+
+    .bottomDisabled {
+        opacity: 0.3 !important;
+        pointer-events: none !important;
+    }
+
+    .bottomIcon {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+    }
+}

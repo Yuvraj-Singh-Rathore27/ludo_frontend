@@ -1,0 +1,257 @@
+.rooms {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    height: fit-content;
+}
+
+.rooms > thead > tr > th {
+    height: 42px;
+    padding: 0 16px;
+    text-align: center;
+    color: #ffd7a4;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 24, 58, 0.22);
+}
+
+.rooms > thead > tr :nth-child(2) {
+    text-align: left;
+}
+
+.rooms > tbody > tr > td {
+    height: 53px;
+    padding: 8px 10px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 24, 58, 0.2);
+    color: rgba(255, 239, 220, 0.9);
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+.rooms > tbody > tr {
+    background: rgba(20, 2, 7, 0.12);
+}
+
+.roomName {
+    max-width: 280px;
+    overflow: hidden;
+    color: #fff !important;
+    font-size: 18px;
+    font-weight: 900;
+    text-align: left !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.firstColumn,
+.lockCell {
+    display: none;
+}
+
+.lockCell img {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.lockInline {
+    display: inline;
+    width: 15px;
+    height: 15px;
+    margin-left: 8px;
+    vertical-align: middle;
+    opacity: 0.85;
+    filter: drop-shadow(0 0 4px rgba(255, 181, 31, 0.5));
+}
+
+.playerCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    min-height: 30px;
+    padding: 3px 8px;
+    border: 1px solid rgba(255, 24, 58, 0.36);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 17px;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    color: #28ff43;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.status::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 8px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.statusStarted {
+    color: #ff1747;
+}
+
+.lastColumn {
+    width: 88px;
+}
+
+.rooms button {
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 67, 95, 0.8);
+    background: linear-gradient(180deg, #ff003c, #b10022);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.14s, box-shadow 0.18s;
+}
+
+.rooms button:hover {
+    background: linear-gradient(180deg, #ff2050, #c8002a);
+    transform: translateY(-1px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 4px 14px rgba(255, 0, 60, 0.38);
+}
+
+.rooms button:active {
+    transform: translateY(0);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 767px) {
+    .rooms > thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: rgba(43, 3, 12, 0.98);
+    }
+
+    .rooms > thead > tr > th {
+        height: clamp(34px, 7vw, 52px);
+        padding: 0 clamp(5px, 1.4vw, 9px);
+        font-size: clamp(11px, 2.4vw, 18px);
+    }
+
+    .rooms > tbody > tr > td {
+        height: clamp(52px, 11vw, 86px);
+        padding: clamp(5px, 1.4vw, 8px) clamp(5px, 1.4vw, 9px);
+    }
+
+    .roomName,
+    .status,
+    .rooms button {
+        font-size: clamp(16px, 3.4vw, 24px);
+    }
+
+    .playerCount {
+        min-width: clamp(58px, 13vw, 102px);
+        min-height: clamp(28px, 6vw, 46px);
+        border-radius: 12px;
+        font-size: clamp(16px, 3.4vw, 24px);
+    }
+
+    .rooms button {
+        min-width: clamp(62px, 14vw, 108px);
+        min-height: clamp(34px, 7vw, 54px);
+        border-radius: 10px;
+    }
+
+
+
+    .lastColumn {
+        width: clamp(72px, 17vw, 126px);
+    }
+}
+
+@media (max-width: 620px) {
+    .rooms > thead > tr > th {
+        height: 31px;
+        padding: 0 4px;
+        font-size: 10px;
+    }
+
+    .rooms > tbody > tr > td {
+        height: 48px;
+        padding: 5px 4px;
+    }
+
+    .roomName,
+    .status,
+    .rooms button {
+        font-size: 16px;
+    }
+
+    .playerCount {
+        min-width: 57px;
+        min-height: 28px;
+        padding: 4px 7px;
+        border-radius: 7px;
+        font-size: 16px;
+    }
+
+    .status::before {
+        width: 5px;
+        height: 5px;
+        margin-right: 5px;
+    }
+
+    .rooms button {
+        min-width: 61px;
+        min-height: 32px;
+        padding: 0 9px;
+        border-radius: 7px;
+    }
+
+    .lastColumn {
+        width: 70px;
+    }
+}
+
+@media (max-width: 380px) {
+    .rooms > thead > tr > th {
+        font-size: 9px;
+    }
+
+    .roomName,
+    .status,
+    .rooms button,
+    .playerCount {
+        font-size: 14px;
+    }
+
+    .playerCount {
+        min-width: 50px;
+        padding: 3px 5px;
+    }
+
+    .rooms button {
+        min-width: 56px;
+        padding: 0 7px;
+    }
+
+    .lastColumn {
+        width: 62px;
+    }
+}

@@ -1,0 +1,62 @@
+/* Circumference for r=18: 2 * π * 18 ≈ 113.1 */
+
+.wrapper {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.svg {
+    /* Rotate so the arc drains starting from 12 o'clock */
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+.track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 3;
+}
+
+.progress {
+    fill: none;
+    stroke: #4cff88;
+    stroke-width: 3;
+    stroke-dasharray: 113.1 113.1;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    animation: timerDrain 15s linear forwards;
+    will-change: stroke-dashoffset;
+}
+
+/*
+ * stroke-dashoffset is GPU-compositable — zero main-thread cost.
+ * The negative animationDelay in the component "seeks" to the correct position.
+ *
+ * Color thresholds match the original clip-path animation:
+ *   0 – 73%   green  (0 – ~11s elapsed)
+ *   73 – 97.5% orange (~11 – ~14.6s)
+ *   97.5 – 100% red   (~14.6 – 15s)
+ *
+ * dashoffset at each threshold:
+ *   73%   → 113.1 × 0.730 = 82.6
+ *   97.5% → 113.1 × 0.975 = 110.3
+ */
+@keyframes timerDrain {
+    0%     { stroke-dashoffset: 0;     stroke: #4cff88; }
+    72.9%  { stroke-dashoffset: 82.4;  stroke: #4cff88; }
+    73%    { stroke-dashoffset: 82.6;  stroke: orange;  }
+    97.4%  { stroke-dashoffset: 110.1; stroke: orange;  }
+    97.5%  { stroke-dashoffset: 110.3; stroke: #ff4444; }
+    100%   { stroke-dashoffset: 113.1; stroke: #ff4444; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .progress {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}

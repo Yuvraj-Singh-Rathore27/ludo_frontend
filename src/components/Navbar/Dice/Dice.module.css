@@ -1,0 +1,345 @@
+.container {
+    display: grid;
+    place-items: center;
+}
+
+.container:empty {
+    display: none;
+}
+
+.cardContainer {
+    display: none;
+}
+
+.dockContainer {
+    position: relative;
+    width: 78px;
+    height: 78px;
+}
+
+.dockContainer::before {
+    content: '';
+    position: absolute;
+    inset: 58% -12% -12%;
+    z-index: -1;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle, rgba(255, 65, 74, 0.55), rgba(255, 65, 74, 0.08) 58%, transparent 72%);
+    filter: blur(10px);
+}
+
+.turnIndicator::after {
+    content: '➜';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(255, 207, 25, 0.62);
+    border-radius: 999px;
+    background:
+        radial-gradient(circle, rgba(255, 207, 25, 0.28), rgba(255, 69, 75, 0.16)),
+        rgba(10, 13, 20, 0.78);
+    color: #ffcf19;
+    font-size: 30px;
+    line-height: 1;
+    pointer-events: none;
+    box-shadow:
+        0 0 24px rgba(255, 207, 25, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transform: translate(-50%, -50%);
+    animation: turnArrowPulse 1.1s ease-in-out infinite;
+}
+
+.resultDie,
+.rollButton,
+.dockIdleDie {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter:
+        drop-shadow(0 20px 26px rgba(0, 0, 0, 0.5))
+        drop-shadow(0 0 18px rgba(255, 68, 74, 0.22));
+}
+
+.resultWrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.resultDie {
+    animation: diceLand 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+.resultBadge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 207, 25, 0.7);
+    background: radial-gradient(circle, #ffcf19, #ff9800);
+    color: #1a1006;
+    font-weight: 800;
+    font-size: 16px;
+    line-height: 1;
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    animation: resultBadgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.cardContainer .resultDie,
+.cardContainer .rollButton {
+    width: 42px;
+    height: 42px;
+}
+
+.cardContainer .resultBadge {
+    min-width: 20px;
+    height: 20px;
+    font-size: 12px;
+    top: -4px;
+    right: -4px;
+}
+
+.rollButton {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.rollButton::before {
+    content: '';
+    position: absolute;
+    inset: 14% 4% -7%;
+    z-index: -1;
+    border-radius: 999px;
+    background: rgba(255, 52, 60, 0.44);
+    filter: blur(12px);
+}
+
+.rollButton > img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.dockContainer .rollButton {
+    width: 78px;
+    height: 78px;
+}
+
+.cardContainer .rollButton::before {
+    display: none;
+}
+
+.readyToRoll {
+    animation: rollInvite 1.25s ease-in-out infinite;
+}
+
+.rolling > img {
+    animation: diceRolling 0.4s linear infinite;
+    will-change: transform;
+    filter:
+        drop-shadow(0 0 12px rgba(255, 215, 50, 0.9))
+        drop-shadow(0 0 24px rgba(255, 155, 20, 0.6))
+        drop-shadow(0 24px 30px rgba(0, 0, 0, 0.65));
+}
+
+.rollButton:disabled {
+    cursor: wait;
+}
+
+@keyframes rollInvite {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-4px) rotate(-4deg);
+    }
+}
+
+@keyframes diceRolling {
+    0% {
+        transform: perspective(280px) rotateX(0deg) rotateZ(0deg) scale(1);
+    }
+
+    14% {
+        transform: perspective(280px) rotateX(52deg) rotateZ(51deg) scale(1.09);
+    }
+
+    28% {
+        transform: perspective(280px) rotateX(104deg) rotateZ(102deg) scale(1.05);
+    }
+
+    42% {
+        transform: perspective(280px) rotateX(156deg) rotateZ(153deg) scale(1.11);
+    }
+
+    57% {
+        transform: perspective(280px) rotateX(208deg) rotateZ(207deg) scale(1.06);
+    }
+
+    71% {
+        transform: perspective(280px) rotateX(260deg) rotateZ(258deg) scale(1.1);
+    }
+
+    85% {
+        transform: perspective(280px) rotateX(312deg) rotateZ(309deg) scale(1.04);
+    }
+
+    100% {
+        transform: perspective(280px) rotateX(360deg) rotateZ(360deg) scale(1);
+    }
+}
+
+@keyframes diceLand {
+    0% {
+        transform: scale(1.18) rotate(-6deg);
+        opacity: 0.85;
+        filter:
+            drop-shadow(0 0 14px rgba(255, 210, 50, 0.9))
+            drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
+    }
+
+    45% {
+        transform: scale(1.04) rotate(-1deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+        filter:
+            drop-shadow(0 20px 26px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 18px rgba(255, 68, 74, 0.22));
+    }
+}
+
+@keyframes resultBadgePop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes turnArrowPulse {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(0.94);
+        opacity: 0.72;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 899px) {
+    .cardContainer {
+        display: none;
+    }
+
+    .dockContainer,
+    .dockContainer .rollButton {
+        width: 72px;
+        height: 72px;
+    }
+}
+
+@media (max-width: 620px) {
+    .dockContainer,
+    .dockContainer .rollButton {
+        width: clamp(46px, 15vw, 58px);
+        height: clamp(46px, 15vw, 58px);
+    }
+
+    .dockContainer .resultBadge {
+        min-width: 19px;
+        height: 19px;
+        font-size: 12px;
+        top: -4px;
+        right: -4px;
+    }
+
+    .turnIndicator::after {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 380px) {
+    .dockContainer,
+    .dockContainer .rollButton {
+        width: 52px;
+        height: 52px;
+    }
+
+    .dockContainer .resultBadge {
+        min-width: 17px;
+        height: 17px;
+        font-size: 11px;
+        top: -3px;
+        right: -3px;
+    }
+}
+
+@media (max-width: 380px) and (max-height: 700px) {
+    .dockContainer,
+    .dockContainer .rollButton {
+        width: 46px;
+        height: 46px;
+    }
+
+    .dockContainer .resultBadge {
+        min-width: 15px;
+        height: 15px;
+        font-size: 10px;
+        top: -2px;
+        right: -2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .readyToRoll,
+    .rolling > img,
+    .resultDie,
+    .resultBadge,
+    .turnIndicator::after {
+        animation: none;
+        filter:
+            drop-shadow(0 20px 26px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 18px rgba(255, 68, 74, 0.22));
+    }
+}

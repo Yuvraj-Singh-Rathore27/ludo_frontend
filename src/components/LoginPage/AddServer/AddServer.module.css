@@ -1,0 +1,323 @@
+.formContainer {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+}
+
+/* ── Inputs ── */
+.formContainer input[type='text'],
+.formContainer input[type='password'] {
+    min-height: 62px;
+    padding: 0 16px;
+    border: 1px solid rgba(255, 24, 58, 0.28);
+    border-radius: 8px;
+    background: rgba(8, 2, 6, 0.48);
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formContainer input[type='text']::placeholder,
+.formContainer input[type='password']::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.formContainer input[type='text']:hover,
+.formContainer input[type='password']:hover {
+    border-color: rgba(255, 24, 58, 0.52);
+}
+
+.formContainer input[type='text']:focus,
+.formContainer input[type='password']:focus {
+    border-color: rgba(255, 24, 58, 0.75);
+    box-shadow: 0 0 0 3px rgba(255, 24, 58, 0.1);
+}
+
+.formContainer input:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+}
+
+/* ── Private row ── */
+.privateContainer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 62px;
+    padding: 0 12px 0 16px;
+    border: 1px solid rgba(255, 24, 58, 0.28);
+    border-radius: 8px;
+    background: rgba(8, 2, 6, 0.48);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    font-weight: 700;
+    transition: border-color 0.2s;
+}
+
+.privateContainer:hover {
+    border-color: rgba(255, 24, 58, 0.52);
+}
+
+/* ── Custom toggle switch ── */
+.toggle {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toggleInput {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.toggleTrack {
+    display: flex;
+    align-items: center;
+    width: 54px;
+    height: 30px;
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.12);
+    transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+
+.toggleInput:checked + .toggleTrack {
+    background: linear-gradient(135deg, #cc1020, #ff1a38);
+    border-color: rgba(255, 24, 58, 0.7);
+    box-shadow: 0 0 12px rgba(255, 24, 58, 0.35);
+}
+
+.toggleThumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0;
+}
+
+.toggleInput:checked + .toggleTrack .toggleThumb {
+    transform: translateX(24px);
+}
+
+.toggle:hover .toggleTrack {
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.toggleInput:checked:hover + .toggleTrack {
+    border-color: rgba(255, 24, 58, 0.9);
+}
+
+/* ── Host Server button ── */
+.formContainer > button {
+    width: 100%;
+    min-height: 59px;
+    border: 1px solid rgba(255, 24, 58, 0.7);
+    border-radius: 8px;
+    background: linear-gradient(115deg, #f20a28, #9c002a);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(242, 10, 40, 0.3);
+    transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+}
+
+.formContainer > button:hover {
+    background: linear-gradient(115deg, #ff1535, #b5002e);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(255, 20, 45, 0.48);
+}
+
+.formContainer > button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 12px rgba(242, 10, 40, 0.3);
+}
+
+/* ── Room type toggle ── */
+.roomTypeRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.roomTypeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 48px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+}
+
+.roomTypeBtn:hover {
+    border-color: rgba(255, 24, 58, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 24, 58, 0.08);
+}
+
+.roomTypeActive {
+    border-color: rgba(255, 24, 58, 0.7) !important;
+    background: rgba(255, 24, 58, 0.18) !important;
+    color: #fff !important;
+}
+
+.privateNote {
+    margin: -6px 0 0;
+    padding: 10px 14px;
+    border-radius: 7px;
+    background: rgba(255, 24, 58, 0.08);
+    border: 1px solid rgba(255, 24, 58, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ── Invite panel (shown after private room is created) ── */
+.inviteContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+}
+
+.inviteHint {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    text-align: center;
+}
+
+.codeBox {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1.5px solid rgba(255, 24, 58, 0.45);
+    border-radius: 10px;
+    background: rgba(8, 2, 6, 0.6);
+}
+
+.codeLetters {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: #fff;
+    font-family: monospace;
+}
+
+.copyBtn {
+    padding: 6px 16px;
+    border: 1px solid rgba(255, 24, 58, 0.5);
+    border-radius: 6px;
+    background: rgba(255, 24, 58, 0.15);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s;
+    white-space: nowrap;
+}
+
+.copyBtn:hover {
+    background: rgba(255, 24, 58, 0.32);
+}
+
+.whatsappBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 52px;
+    border: none;
+    border-radius: 8px;
+    background: #25D366;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(37, 211, 102, 0.3);
+    transition: background 0.18s, transform 0.15s;
+}
+
+.whatsappBtn:hover {
+    background: #1ebe5a;
+    transform: translateY(-2px);
+}
+
+.whatsappBtn:active {
+    transform: translateY(0);
+}
+
+.enterBtn {
+    width: 100%;
+    min-height: 52px;
+    border: 1px solid rgba(255, 24, 58, 0.7);
+    border-radius: 8px;
+    background: linear-gradient(115deg, #f20a28, #9c002a);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(242, 10, 40, 0.3);
+    transition: background 0.18s, transform 0.15s;
+}
+
+.enterBtn:hover {
+    background: linear-gradient(115deg, #ff1535, #b5002e);
+    transform: translateY(-2px);
+}
+
+.enterBtn:active {
+    transform: translateY(0);
+}
+
+/* ── Responsive ── */
+@media (max-width: 620px) {
+    .formContainer {
+        gap: 12px;
+        padding: 18px 15px;
+    }
+
+    .formContainer input[type='text'],
+    .formContainer input[type='password'],
+    .privateContainer {
+        min-height: 48px;
+        font-size: 14px;
+    }
+
+    .formContainer > button {
+        min-height: 50px;
+        font-size: 18px;
+    }
+
+    .toggleTrack {
+        width: 46px;
+        height: 26px;
+    }
+
+    .toggleThumb {
+        width: 18px;
+        height: 18px;
+    }
+
+    .toggleInput:checked + .toggleTrack .toggleThumb {
+        transform: translateX(20px);
+    }
+}

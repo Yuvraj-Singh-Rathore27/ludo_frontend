@@ -1,0 +1,1305 @@
+/* ═══════════════════════════════════════════════════════════
+   LUDO ARENA — SIGNUP SCREEN  (premium redesign)
+   Breakpoints: 560px · 400px · height-680
+═══════════════════════════════════════════════════════════ */
+
+.page {
+    --red:      #ff1747;
+    --red-mid:  #c0112a;
+    --red-dark: #7a0016;
+    --gold:     #ffb51f;
+    --gold-dim: rgba(255,181,31,0.55);
+    --card-bg:  rgba(8,1,5,0.94);
+    --ib:       rgba(255,255,255,0.10);
+    --ibf:      rgba(255,24,58,0.75);
+
+    min-height: 100vh;
+    min-height: 100svh;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    color: #fff;
+    font-family: inherit;
+    overflow-x: hidden;
+}
+
+
+/* ─── CARD ──────────────────────────────────────────────── */
+.card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255,24,58,0.28);
+    background: var(--card-bg);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.05),
+        0 4px 16px rgba(0,0,0,0.35),
+        0 24px 64px rgba(0,0,0,0.72),
+        0 0 80px rgba(180,8,30,0.14),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    animation: rise 0.44s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes rise {
+    from { opacity:0; transform: translateY(32px) scale(0.96); }
+    to   { opacity:1; transform: translateY(0)    scale(1); }
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 5%, var(--red) 35%, var(--gold) 50%, var(--red) 65%, transparent 95%);
+    opacity: 0.9;
+}
+
+/* ─── HEADER ────────────────────────────────────────────── */
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 28px 20px;
+    background: linear-gradient(130deg,
+        rgba(160,8,32,0.90) 0%,
+        rgba(80,3,18,0.65) 55%,
+        rgba(20,1,8,0.50) 100%);
+    border-bottom: 1px solid rgba(255,24,58,0.16);
+}
+
+.logoRing {
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #7a0818, #240209);
+    box-shadow:
+        0 0 0 2px rgba(255,24,58,0.45),
+        0 6px 22px rgba(255,24,58,0.40),
+        inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+.logoRing img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: lighten;
+}
+
+.brandBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.brandName {
+    display: block;
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 40%, rgba(255,200,200,0.85));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.brandSub {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 0.26em;
+    opacity: 0.92;
+}
+
+/* ─── CARD BODY ─────────────────────────────────────────── */
+.cardBody {
+    padding: 24px 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ─── TITLE ─────────────────────────────────────────────── */
+.titleSection { text-align: center; }
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.tLineL { flex:1; height:1px; background: linear-gradient(to right,  transparent, var(--gold-dim)); }
+.tLineR { flex:1; height:1px; background: linear-gradient(to left,   transparent, var(--gold-dim)); }
+
+.tDiamond {
+    color: var(--gold);
+    font-size: 7px;
+    opacity: 0.85;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 4px rgba(255,181,31,0.6));
+}
+
+.titleText {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #fff 30%, rgba(255,200,180,0.9));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ─── 2-COL ROW ─────────────────────────────────────────── */
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.rowLocked { pointer-events: none; opacity: 0.70; }
+
+/* ─── GENERIC FIELD WRAPPER ─────────────────────────────── */
+.fieldWrap { display: flex; flex-direction: column; gap: 5px; }
+.fieldLocked { pointer-events: none; opacity: 0.70; }
+
+.inputRow {
+    display: flex;
+    align-items: center;
+    height: 54px;
+    border: 1.5px solid var(--ib);
+    border-radius: 13px;
+    background: rgba(255,255,255,0.045);
+    overflow: hidden;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+}
+
+.inputRow:focus-within {
+    border-color: rgba(255,255,255,0.24);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.inputRowErr {
+    border-color: rgba(255,24,58,0.78) !important;
+    box-shadow: 0 0 0 3px rgba(255,24,58,0.18) !important;
+}
+
+.inputRowOk {
+    border-color: rgba(60,200,100,0.45) !important;
+}
+
+.inputIconL {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 10px 0 13px;
+}
+
+.inputIconL svg { width: 100%; height: 100%; stroke: rgba(255,255,255,0.35); }
+
+.inputIconR {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 12px 0 0;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.inputIconR svg { width: 100%; height: 100%; stroke: rgba(255,255,255,0.35); }
+
+.validTick {
+    flex: 0 0 auto;
+    width: 17px;
+    height: 17px;
+    margin-right: 11px;
+    color: rgba(60,200,100,0.85);
+}
+
+.inputRow input {
+    flex: 1;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 500;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+}
+
+.inputRow input::placeholder { color: rgba(255,255,255,0.28); }
+
+.inputRow input:focus {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.fieldErr {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #ff7575;
+    padding-left: 2px;
+}
+
+/* ─── PHONE ROW (with country picker) ──────────────────── */
+.phoneRow {
+    display: flex;
+    align-items: center;
+    height: 54px;
+    border: 1.5px solid var(--ib);
+    border-radius: 13px;
+    background: rgba(255,255,255,0.045);
+    overflow: hidden;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+}
+
+.phoneRow:focus-within {
+    border-color: rgba(255,255,255,0.22);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.05);
+}
+
+.phoneRowErr {
+    border-color: rgba(255,24,58,0.78) !important;
+    box-shadow: 0 0 0 3px rgba(255,24,58,0.18) !important;
+}
+
+.phoneRowLocked { opacity: 0.70; pointer-events: none; }
+
+.phoneInput {
+    flex: 1;
+    height: 100%;
+    padding: 0 4px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 500;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+}
+
+.phoneInput::placeholder { color: rgba(255,255,255,0.28); }
+
+.phoneInput:focus {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.pickerSep {
+    width: 1px;
+    height: 26px;
+    background: rgba(255,255,255,0.12);
+    flex-shrink: 0;
+}
+
+.phoneIconR {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 13px 0 0;
+}
+
+.phoneIconR svg { width: 100%; height: 100%; stroke: rgba(255,255,255,0.20); }
+
+/* ─── COUNTRY PICKER ────────────────────────────────────── */
+.picker { position: relative; flex-shrink: 0; }
+
+.pickerBtn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 54px;
+    padding: 0 10px 0 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.18s;
+    white-space: nowrap;
+}
+
+.pickerBtn:hover:not(:disabled) { background: rgba(255,255,255,0.05); }
+.pickerBtnOpen { background: rgba(255,24,58,0.06) !important; }
+.pickerBtn:disabled { cursor: not-allowed; }
+
+.pickerFlag { font-size: 18px; line-height: 1; }
+
+.pickerDial {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.02em;
+}
+
+.pickerChevron {
+    display: flex;
+    align-items: center;
+    width: 12px;
+    height: 12px;
+    color: rgba(255,255,255,0.40);
+    transition: transform 0.2s;
+}
+
+.pickerChevronOpen { transform: rotate(180deg); }
+.pickerChevron svg { width: 100%; height: 100%; }
+
+.pickerDropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 200;
+    min-width: 200px;
+    max-height: 250px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba(255,24,58,0.30);
+    border-radius: 12px;
+    background: rgba(10,1,6,0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.70), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: dropIn 0.16s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,24,58,0.3) transparent;
+}
+
+@keyframes dropIn {
+    from { opacity:0; transform: translateY(-6px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+.pickerItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.14s;
+    font-size: 13px;
+}
+
+.pickerItem:hover   { background: rgba(255,24,58,0.12); }
+.pickerItemActive   { background: rgba(255,24,58,0.18) !important; }
+
+.pickerItemName {
+    flex: 1;
+    color: rgba(255,255,255,0.88);
+    font-weight: 600;
+}
+
+.pickerItemDial {
+    color: rgba(255,255,255,0.42);
+    font-size: 12px;
+}
+
+/* ─── OTP CARD ──────────────────────────────────────────── */
+.otpCard {
+    border: 1px solid rgba(255,24,58,0.25);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(80,4,18,0.35) 0%, rgba(4,0,2,0.50) 100%);
+    padding: 15px 16px 17px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+@keyframes slideUp {
+    from { opacity:0; transform: translateY(12px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+.otpCardTop { display: flex; align-items: center; gap: 8px; }
+
+.otpCardDot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(255,24,58,0.7);
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%,100% { box-shadow: 0 0 6px rgba(255,24,58,0.5); }
+    50%      { box-shadow: 0 0 16px rgba(255,24,58,0.9); }
+}
+
+.otpCard h3 { margin: 0; font-size: 14.5px; font-weight: 800; letter-spacing: 0.04em; }
+
+.otpCardSub { margin: 0; font-size: 12.5px; color: rgba(255,255,255,0.56); }
+
+.phoneHighlight { color: var(--gold); font-weight: 700; }
+
+.otpBoxes { display: flex; gap: 8px; margin: 4px 0 2px; width: 100%; }
+
+.otpDigit {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    border: 1.5px solid rgba(255,255,255,0.16);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+    text-align: center;
+    outline: none;
+    cursor: text;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s, transform 0.12s;
+}
+
+.otpDigit:focus {
+    border-color: var(--red);
+    background: rgba(255,24,58,0.08);
+    box-shadow: 0 0 0 3px rgba(255,24,58,0.22), 0 0 14px rgba(255,24,58,0.15);
+    transform: scale(1.06);
+}
+
+.otpDigitFilled {
+    border-color: rgba(255,24,58,0.55);
+    background: rgba(255,24,58,0.07);
+}
+
+.otpDigit::placeholder { color: rgba(255,255,255,0.15); font-size: 13px; }
+
+.devHint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,181,31,0.30);
+    background: rgba(255,181,31,0.07);
+    font-size: 12px;
+    color: rgba(255,255,255,0.52);
+}
+
+.devHint svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--gold); opacity: 0.75; }
+.devHint strong { color: var(--gold); font-weight: 800; font-size: 13px; }
+
+/* ─── API ERROR ─────────────────────────────────────────── */
+.apiError {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,24,58,0.40);
+    background: rgba(255,24,58,0.09);
+    font-size: 13px;
+    font-weight: 700;
+    color: #ff8888;
+    line-height: 1.46;
+    animation: shake 0.28s ease;
+}
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-5px); }
+    75%      { transform: translateX(5px); }
+}
+
+/* ─── BUTTON ────────────────────────────────────────────── */
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 56px;
+    padding: 0 6px 0 24px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(130deg, #8b0e1a 0%, #cc1228 50%, #9c0e1e 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow:
+        0 6px 30px rgba(180,14,34,0.50),
+        0 2px 0 rgba(255,255,255,0.08) inset,
+        0 -2px 0 rgba(0,0,0,0.22) inset;
+    transition: transform 0.16s, box-shadow 0.16s, opacity 0.16s;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+}
+
+.btn:hover:not(:disabled)::after { transform: translateX(100%); }
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(200,14,38,0.62), 0 2px 0 rgba(255,255,255,0.10) inset;
+}
+
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 4px 18px rgba(180,14,34,0.4); }
+.btn:disabled { opacity: 0.58; cursor: not-allowed; }
+
+.btnArrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+    background: rgba(0,0,0,0.25);
+    font-size: 26px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: 0;
+    flex-shrink: 0;
+}
+
+/* ─── SPINNER ───────────────────────────────────────────── */
+.spin {
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    margin-right: 9px;
+    border: 2.5px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: rot 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* ─── DIVIDER ───────────────────────────────────────────── */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1px 0;
+}
+
+.divider span { flex:1; height:1px; background: rgba(255,255,255,0.09); }
+.divider small {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 0.1em;
+}
+
+/* ─── SWITCH LINK ───────────────────────────────────────── */
+.switchLink {
+    margin: 0;
+    text-align: center;
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.44);
+}
+
+.switchLink a {
+    color: var(--gold);
+    font-weight: 800;
+    text-decoration: none;
+    transition: color 0.18s;
+}
+
+.switchLink a:hover { color: #fff; }
+
+/* ─── SUCCESS ───────────────────────────────────────────── */
+.successWrap {
+    padding: 48px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: rise 0.4s ease;
+}
+
+.successIcon {
+    display: flex;
+    width: 70px; height: 70px;
+    color: var(--gold);
+    filter: drop-shadow(0 0 20px rgba(255,181,31,0.50));
+}
+
+.successIcon svg { width: 100%; height: 100%; }
+
+.successWrap h2 { margin: 0; font-size: 22px; font-weight: 900; }
+.successWrap p  { margin: 0; font-size: 14px; color: rgba(255,255,255,0.52); }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 540px) {
+    .page       { padding: 20px 14px; }
+    .card       { border-radius: 20px; }
+    .cardHeader { padding: 18px 20px 16px; }
+    .cardBody   { padding: 20px 20px 26px; gap: 12px; }
+    .row        { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .titleText  { font-size: 19px; }
+    .logoRing   { width: 48px; height: 48px; border-radius: 12px; }
+    .brandName  { font-size: 18px; }
+    .btn        { height: 52px; font-size: 14px; padding: 0 4px 0 20px; }
+    .btnArrow   { width: 42px; height: 42px; }
+    .otpDigit   { height: 50px; font-size: 19px; }
+    .otpBoxes   { gap: 6px; }
+    .otpCard    { padding: 14px 12px 16px; }
+}
+
+@media (max-width: 400px) {
+    .page       { padding: 16px 12px; }
+    .card       { border-radius: 18px; }
+    .cardHeader { padding: 16px 16px 14px; }
+    .cardBody   { padding: 18px 16px 22px; gap: 11px; }
+    .row        { grid-template-columns: 1fr; gap: 10px; }
+    .titleText  { font-size: 17px; }
+    .logoRing   { width: 44px; height: 44px; border-radius: 11px; }
+    .brandName  { font-size: 17px; }
+    .inputRow   { height: 50px; border-radius: 11px; }
+    .phoneRow   { height: 50px; border-radius: 11px; }
+    .pickerBtn  { height: 50px; }
+    .btn        { height: 50px; border-radius: 12px; }
+}
+
+@media (max-width: 360px) {
+    .cardBody   { padding: 16px 14px 20px; gap: 10px; }
+    .inputRow   { height: 48px; }
+    .phoneRow   { height: 48px; }
+    .pickerBtn  { height: 48px; }
+    .btn        { height: 48px; }
+    .otpDigit   { height: 46px; font-size: 17px; }
+    .otpCard    { padding: 12px 10px 14px; }
+}
+
+@media (max-height: 680px) and (max-width: 900px) {
+    .page       { padding: 12px 14px; align-items: flex-start; }
+    .cardBody   { gap: 9px; }
+    .cardHeader { padding: 14px 20px 12px; }
+}
+
+/* ─── RESEND ROW ─────────────────────────────────────────── */
+.resendRow {
+    margin: -3px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+}
+
+.resendBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.18s;
+}
+
+.resendBtn:hover:not(:disabled) { color: #fff; }
+
+.resendBtnDisabled {
+    color: rgba(255,255,255,0.30) !important;
+    text-decoration: none;
+    cursor: not-allowed;
+    font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REFERENCE-MATCH AUTH SHELL
+   CSS-only layout upgrade for desktop, laptop, tablet and mobile.
+═══════════════════════════════════════════════════════════ */
+.page {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(14px, 2.2vw, 34px);
+    background:
+        radial-gradient(circle at 50% 100%, rgba(198, 18, 36, 0.34), transparent 34%),
+        radial-gradient(circle at 12% 12%, rgba(180, 4, 28, 0.18), transparent 30%),
+        linear-gradient(180deg, #090105 0%, #140207 54%, #2a050c 100%);
+}
+
+.page::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image: url('../../../images/pages/login-ludo.png');
+    background-position: center;
+    background-size: cover;
+    opacity: 0.2;
+    filter: saturate(1.1) contrast(1.05);
+}
+
+.page::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(90deg, rgba(2, 0, 2, 0.78), rgba(14, 1, 6, 0.42) 48%, rgba(45, 3, 10, 0.7)),
+        radial-gradient(circle at 50% 40%, transparent 0 18%, rgba(0, 0, 0, 0.5) 76%);
+    pointer-events: none;
+}
+
+@media (min-width: 768px) {
+    .card {
+        width: min(94vw, 1180px);
+        max-width: none;
+        min-height: clamp(560px, 64vw, 690px);
+        border-radius: 16px;
+        background:
+            linear-gradient(90deg, rgba(9, 0, 4, 0.14) 0 51%, rgba(10, 1, 5, 0.96) 51% 100%);
+        overflow: hidden;
+    }
+
+    .card::after {
+        content: '';
+        position: absolute;
+        inset: 0 49% 0 0;
+        z-index: 0;
+        background:
+            linear-gradient(90deg, rgba(5, 0, 3, 0.18), rgba(9, 0, 5, 0.24) 58%, rgba(8, 0, 4, 0.72)),
+            url('../../../images/pages/login-ludo.png') center / cover no-repeat;
+        filter: saturate(1.15) contrast(1.02);
+    }
+
+    .cardHeader,
+    .cardBody {
+        position: relative;
+        z-index: 2;
+        width: 49%;
+        margin-left: auto;
+    }
+
+    .cardHeader {
+        gap: 10px;
+        padding: clamp(12px, 1.3vw, 18px) clamp(18px, 2vw, 28px) 8px;
+        background: transparent;
+        border-bottom: 0;
+    }
+
+    .cardBody {
+        padding: 6px clamp(24px, 3.6vw, 52px) clamp(16px, 2.6vw, 30px);
+        gap: clamp(8px, 0.95vw, 12px);
+    }
+
+    .logoRing {
+        width: clamp(38px, 3.8vw, 50px);
+        height: clamp(38px, 3.8vw, 50px);
+        border-radius: 11px;
+    }
+
+    .brandName { font-size: clamp(15px, 1.55vw, 20px); }
+    .brandSub  { font-size: clamp(8px, 0.76vw, 10px); }
+    .titleText { font-size: clamp(17px, 1.55vw, 21px); }
+
+    .row { gap: clamp(8px, 0.85vw, 12px); }
+
+    .inputRow,
+    .phoneRow,
+    .pickerBtn {
+        height: clamp(38px, 3.5vw, 46px);
+        border-radius: 8px;
+    }
+
+    .inputRow input,
+    .phoneInput {
+        font-size: clamp(12px, 1vw, 14px);
+    }
+
+    .fieldErr {
+        font-size: clamp(10px, 0.86vw, 11.5px);
+    }
+
+    .btn {
+        height: clamp(40px, 3.7vw, 48px);
+        border-radius: 8px;
+        font-size: clamp(11px, 0.95vw, 13px);
+        padding-left: 20px;
+    }
+
+    .btnArrow {
+        width: clamp(32px, 3.1vw, 40px);
+        height: clamp(32px, 3.1vw, 40px);
+        border-radius: 7px;
+    }
+
+    .divider { margin: 0; }
+
+    .otpCard {
+        border-radius: 8px;
+        padding: clamp(12px, 1.3vw, 16px);
+    }
+
+    .otpBoxes { gap: clamp(6px, 0.75vw, 9px); }
+
+    .otpDigit {
+        height: clamp(40px, 3.8vw, 52px);
+        border-radius: 7px;
+    }
+
+    .card:has(.successWrap) {
+        width: min(94vw, 520px);
+        min-height: auto;
+        background: var(--card-bg);
+    }
+
+    .card:has(.successWrap)::after { display: none; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .card {
+        width: min(94vw, 900px);
+        min-height: 620px;
+        background:
+            linear-gradient(90deg, rgba(9, 0, 4, 0.16) 0 42%, rgba(10, 1, 5, 0.96) 42% 100%);
+    }
+
+    .card::after { inset-right: 58%; }
+
+    .cardHeader,
+    .cardBody {
+        width: 58%;
+    }
+
+    .cardBody {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
+
+@media (max-width: 767px) {
+    .page {
+        align-items: center;
+        padding: 14px;
+    }
+
+    .card {
+        max-width: 430px;
+        border-radius: 18px;
+    }
+
+    .card::after { display: none; }
+
+    .page::before {
+        opacity: 0.18;
+        background-position: center;
+    }
+}
+
+@media (min-width: 1440px) {
+    .card {
+        width: min(88vw, 1320px);
+        min-height: 680px;
+    }
+
+    .cardBody {
+        padding-left: 58px;
+        padding-right: 58px;
+    }
+}
+
+/* Clean icon treatment: no filled red blocks inside fields. */
+.inputRow,
+.phoneRow {
+    background: rgba(18, 6, 12, 0.82);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.inputRow:focus-within,
+.phoneRow:focus-within {
+    background: rgba(20, 7, 13, 0.92);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.055);
+}
+
+.inputRowErr,
+.phoneRowErr {
+    background: rgba(18, 6, 12, 0.86) !important;
+}
+
+.inputIconL,
+.inputIconR,
+.phoneIconR {
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.inputIconL svg,
+.inputIconR svg,
+.phoneIconR svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 1.65;
+    opacity: 0.92;
+}
+
+.inputIconR {
+    width: 30px;
+    height: 30px;
+    margin: 0 10px 0 4px;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    border-radius: 50%;
+}
+
+.inputIconR:hover {
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.phoneIconR {
+    margin-right: 14px;
+}
+
+.pickerBtn,
+.pickerBtnOpen {
+    background: transparent !important;
+}
+
+.pickerBtn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.035) !important;
+}
+
+.pickerSep {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.btnArrow {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    color: transparent;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btnArrow::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-top: 2px solid #fff;
+    border-right: 2px solid #fff;
+    transform: translateX(-1px) rotate(45deg);
+}
+
+.btn:hover:not(:disabled) .btnArrow {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+/* Final mobile pass for signup states: create account, OTP, success. */
+@media (max-width: 600px) {
+    .page {
+        align-items: stretch;
+        min-height: 100dvh;
+        padding: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .page::before {
+        background-image: url('../../../images/pages/login-ludo-3.png');
+        background-position: center top;
+        opacity: 0.24;
+    }
+
+    .page::after {
+        background:
+            linear-gradient(180deg, rgba(3, 0, 3, 0.76), rgba(16, 1, 7, 0.68) 44%, rgba(38, 3, 11, 0.82)),
+            radial-gradient(circle at 50% 18%, rgba(255, 26, 54, 0.2), transparent 46%);
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        min-height: 100dvh;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background:
+            linear-gradient(180deg, rgba(4, 0, 3, 0.88), rgba(13, 1, 6, 0.74) 46%, rgba(35, 2, 10, 0.9)),
+            transparent;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .card::before {
+        height: 1px;
+    }
+
+    .cardHeader {
+        gap: 9px;
+        width: min(100% - 28px, 390px);
+        margin: 0 auto;
+        padding: max(16px, env(safe-area-inset-top)) 0 10px;
+        background: transparent;
+        border-bottom: 0;
+    }
+
+    .logoRing {
+        width: 35px;
+        height: 35px;
+        border-radius: 9px;
+    }
+
+    .brandName {
+        font-size: 13px;
+        letter-spacing: 0.08em;
+    }
+
+    .brandSub {
+        font-size: 6.8px;
+        letter-spacing: 0.18em;
+    }
+
+    .cardBody {
+        width: min(100% - 28px, 390px);
+        margin: 0 auto max(12px, env(safe-area-inset-bottom));
+        padding: 12px 14px 18px;
+        gap: 10px;
+        border: 1px solid rgba(255, 24, 58, 0.34);
+        border-radius: 18px;
+        background: rgba(8, 1, 5, 0.82);
+        box-shadow:
+            0 18px 48px rgba(0, 0, 0, 0.46),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(10px);
+    }
+
+    .titleRow {
+        gap: 6px;
+    }
+
+    .titleText {
+        max-width: 100%;
+        font-size: clamp(14px, 4.7vw, 18px);
+        white-space: normal;
+        line-height: 1.15;
+    }
+
+    .row {
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+    }
+
+    .inputRow,
+    .phoneRow,
+    .pickerBtn {
+        height: 40px;
+        border-radius: 8px;
+    }
+
+    .inputRow input,
+    .phoneInput {
+        font-size: 11.5px;
+    }
+
+    .inputIconL {
+        width: 14px;
+        height: 14px;
+        margin-left: 9px;
+        margin-right: 7px;
+    }
+
+    .inputIconR {
+        width: 27px;
+        height: 27px;
+        margin-right: 6px;
+    }
+
+    .validTick {
+        width: 14px;
+        height: 14px;
+        margin-right: 8px;
+    }
+
+    .inputIconL svg,
+    .inputIconR svg,
+    .phoneIconR svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .pickerBtn {
+        gap: 4px;
+        padding: 0 7px 0 9px;
+    }
+
+    .pickerFlag {
+        font-size: 14px;
+    }
+
+    .pickerDial {
+        font-size: 10.5px;
+    }
+
+    .pickerChevron {
+        width: 10px;
+        height: 10px;
+    }
+
+    .pickerDropdown {
+        min-width: 178px;
+        max-height: min(240px, 52dvh);
+        border-radius: 10px;
+    }
+
+    .phoneIconR {
+        margin-right: 10px;
+    }
+
+    .fieldWrap {
+        gap: 4px;
+    }
+
+    .fieldErr,
+    .apiError,
+    .switchLink,
+    .resendRow,
+    .otpCardSub {
+        font-size: 10.5px;
+        line-height: 1.35;
+    }
+
+    .apiError {
+        padding: 8px 10px;
+        border-radius: 8px;
+    }
+
+    .otpCard {
+        gap: 8px;
+        padding: 11px 10px 12px;
+        border-radius: 9px;
+    }
+
+    .otpCard h3 {
+        font-size: 12px;
+    }
+
+    .otpBoxes {
+        gap: 5px;
+    }
+
+    .otpDigit {
+        height: clamp(38px, 11.5vw, 45px);
+        border-radius: 7px;
+        font-size: 16px;
+    }
+
+    .devHint {
+        max-width: 100%;
+        padding: 4px 8px;
+        border-radius: 7px;
+        font-size: 10px;
+    }
+
+    .btn {
+        height: 41px;
+        padding: 0 4px 0 15px;
+        border-radius: 9px;
+        font-size: 10.5px;
+        letter-spacing: 0.05em;
+    }
+
+    .btnArrow {
+        width: 31px;
+        height: 31px;
+        border-radius: 7px;
+    }
+
+    .divider {
+        gap: 8px;
+        margin: -1px 0;
+    }
+
+    .divider small {
+        font-size: 9px;
+    }
+
+    .successWrap {
+        width: min(100% - 28px, 390px);
+        min-height: 320px;
+        margin: auto;
+        justify-content: center;
+        padding: 34px 18px;
+        border: 1px solid rgba(255, 24, 58, 0.34);
+        border-radius: 18px;
+        background: rgba(8, 1, 5, 0.82);
+    }
+
+    .successIcon {
+        width: 58px;
+        height: 58px;
+    }
+}
+
+@media (max-width: 380px) {
+    .row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 360px) {
+    .page {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .cardHeader {
+        padding-left: 11px;
+        padding-right: 11px;
+    }
+
+    .cardBody {
+        width: min(100% - 18px, 390px);
+        padding-left: 10px;
+        padding-right: 10px;
+        gap: 8px;
+    }
+
+    .otpBoxes {
+        gap: 4px;
+    }
+
+    .otpDigit {
+        height: 38px;
+        font-size: 15px;
+    }
+}

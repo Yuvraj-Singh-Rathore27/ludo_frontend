@@ -1,0 +1,254 @@
+.serversTableContainer {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    max-height: 390px;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* ── Tabs ── */
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.tabBtn {
+    padding: 9px 0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+}
+
+.tabBtn:hover {
+    border-color: rgba(255, 24, 58, 0.35);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.tabActive {
+    border-color: rgba(255, 24, 58, 0.65) !important;
+    background: rgba(255, 24, 58, 0.14) !important;
+    color: #fff !important;
+}
+
+/* ── Pools list ── */
+.poolsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.poolCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 24, 58, 0.2);
+    border-radius: 10px;
+    background: rgba(8, 2, 6, 0.45);
+    transition: border-color 0.18s;
+}
+
+.poolCard:hover {
+    border-color: rgba(255, 24, 58, 0.42);
+}
+
+.poolInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.poolName {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.poolDesc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.poolMeta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    flex-wrap: wrap;
+}
+
+.poolDot {
+    opacity: 0.4;
+}
+
+.poolPrize {
+    color: #4cff88;
+    font-weight: 700;
+}
+
+.poolJoinBtn {
+    flex-shrink: 0;
+    padding: 7px 18px;
+    border: 1px solid rgba(255, 24, 58, 0.6);
+    border-radius: 7px;
+    background: linear-gradient(115deg, #f20a28, #9c002a);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.12s;
+    white-space: nowrap;
+}
+
+.poolJoinBtn:hover:not(:disabled) {
+    background: linear-gradient(115deg, #ff1535, #b5002e);
+    transform: translateY(-1px);
+}
+
+.poolJoinBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ── Join-by-code form ── */
+.codeForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 2px;
+    flex-shrink: 0;
+}
+
+.codeHint {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.codeInput {
+    min-height: 62px;
+    padding: 0 16px;
+    border: 1px solid rgba(255, 24, 58, 0.35);
+    border-radius: 8px;
+    background: rgba(8, 2, 6, 0.48);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 6px;
+    text-align: center;
+    font-family: monospace;
+    outline: none;
+    text-transform: uppercase;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.codeInput::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 3px;
+    font-weight: 400;
+    font-size: 16px;
+}
+
+.codeInput:focus {
+    border-color: rgba(255, 24, 58, 0.7);
+    box-shadow: 0 0 0 3px rgba(255, 24, 58, 0.1);
+}
+
+.codeError {
+    color: #ff4d6a;
+    font-size: 13px;
+    text-align: center;
+}
+
+.joinCodeBtn {
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid rgba(255, 24, 58, 0.7);
+    border-radius: 8px;
+    background: linear-gradient(115deg, #f20a28, #9c002a);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(242, 10, 40, 0.3);
+    transition: background 0.18s, transform 0.15s;
+}
+
+.joinCodeBtn:hover:not(:disabled) {
+    background: linear-gradient(115deg, #ff1535, #b5002e);
+    transform: translateY(-2px);
+}
+
+.joinCodeBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.refresh {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    margin-left: auto;
+    border: 1px solid rgba(255, 24, 58, 0.35);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: transform 0.2s ease-in-out, background 0.2s ease-in-out;
+}
+
+.refresh:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: rotate(18deg);
+}
+
+.refresh > img {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+@media (max-width: 767px) {
+    .serversTableContainer {
+        min-height: min(258px, calc(100dvh - 430px));
+        max-height: max(258px, calc(100dvh - 430px));
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+    }
+}
+
+@media (max-width: 420px) {
+    .serversTableContainer {
+        min-height: min(230px, calc(100dvh - 420px));
+        max-height: max(230px, calc(100dvh - 420px));
+    }
+}

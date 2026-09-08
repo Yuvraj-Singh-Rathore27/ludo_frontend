@@ -1,0 +1,1538 @@
+/* ═══════════════════════════════════════════════════════════
+   LUDO ARENA — AUTH LOGIN SCREEN
+   Breakpoints: 520px · 400px · height-680
+═══════════════════════════════════════════════════════════ */
+
+/* ── page tokens ── */
+.page {
+    --red:      #ff1747;
+    --red-mid:  #c0112a;
+    --red-dark: #7a0016;
+    --gold:     #ffb51f;
+    --gold-dim: rgba(255,181,31,0.55);
+    --card-bg:  rgba(8,1,5,0.94);
+    --ib:       rgba(255,255,255,0.10);
+    --ibf:      rgba(255,24,58,0.75);
+
+    min-height: 100vh;
+    min-height: 100svh;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    color: #fff;
+    font-family: inherit;
+    overflow-x: hidden;
+}
+
+
+/* ─── CARD ──────────────────────────────────────────────── */
+.card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255,24,58,0.30);
+    background: var(--card-bg);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.05),
+        0 4px 16px rgba(0,0,0,0.40),
+        0 24px 60px rgba(0,0,0,0.70),
+        0 0 80px rgba(180,8,30,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    animation: rise 0.44s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes rise {
+    from { opacity:0; transform: translateY(32px) scale(0.96); }
+    to   { opacity:1; transform: translateY(0)    scale(1); }
+}
+
+/* top accent line */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 5%, var(--red) 35%, var(--gold) 50%, var(--red) 65%, transparent 95%);
+    opacity: 0.9;
+}
+
+/* ─── HEADER ────────────────────────────────────────────── */
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 28px 20px;
+    background: linear-gradient(130deg,
+        rgba(160,8,32,0.90) 0%,
+        rgba(80,3,18,0.65) 55%,
+        rgba(20,1,8,0.50) 100%);
+    border-bottom: 1px solid rgba(255,24,58,0.18);
+}
+
+.logoRing {
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #7a0818, #240209);
+    box-shadow:
+        0 0 0 2px rgba(255,24,58,0.45),
+        0 6px 22px rgba(255,24,58,0.40),
+        inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+.logoRing img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: lighten;
+}
+
+.brandBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.brandName {
+    display: block;
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 40%, rgba(255,200,200,0.85));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.brandSub {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 0.26em;
+    opacity: 0.92;
+}
+
+/* ─── CARD BODY ─────────────────────────────────────────── */
+.cardBody {
+    padding: 24px 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 430px;
+}
+
+/* ─── TITLE ─────────────────────────────────────────────── */
+.titleSection { text-align: center; }
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 7px;
+}
+
+.tLineL { flex:1; height:1px; background: linear-gradient(to right,  transparent, var(--gold-dim)); }
+.tLineR { flex:1; height:1px; background: linear-gradient(to left,   transparent, var(--gold-dim)); }
+
+.tDiamond {
+    color: var(--gold);
+    font-size: 7px;
+    opacity: 0.85;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 4px rgba(255,181,31,0.6));
+}
+
+.titleText {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #fff 30%, rgba(255,200,180,0.9));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.titleSub {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255,255,255,0.48);
+    letter-spacing: 0.01em;
+}
+
+/* ─── METHOD TABS ────────────────────────────────────────── */
+.tabs {
+    display: flex;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.tabBtn {
+    flex: 1;
+    height: 34px;
+    border: none;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    background: transparent;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.tabBtn:hover:not(.tabBtnActive) {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.80);
+}
+
+.tabBtnActive {
+    background: #c0392b;
+    color: #fff;
+}
+
+/* ─── GENERIC FIELD WRAPPER ─────────────────────────────── */
+.fieldWrap { display: flex; flex-direction: column; gap: 5px; }
+
+.fieldErr {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ff7070;
+    padding-left: 2px;
+}
+
+/* ─── INPUT ROW (email / password / generic) ────────────── */
+.inputRow {
+    display: flex;
+    align-items: center;
+    height: 54px;
+    border: 1.5px solid var(--ib);
+    border-radius: 13px;
+    background: rgba(255,255,255,0.045);
+    overflow: hidden;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+}
+
+.inputRow:focus-within {
+    border-color: rgba(255,255,255,0.22);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.inputRowErr {
+    border-color: rgba(255,24,58,0.78) !important;
+    box-shadow: 0 0 0 3px rgba(255,24,58,0.18) !important;
+}
+
+.inputRow input {
+    flex: 1;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 500;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+}
+
+.inputRow input::placeholder { color: rgba(255,255,255,0.28); }
+
+.inputRow input:focus {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* ─── INPUT ICONS ────────────────────────────────────────── */
+.inputIconL {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 10px 0 13px;
+}
+
+.inputIconL svg { width: 100%; height: 100%; stroke: rgba(255,255,255,0.35); }
+
+.inputIconR {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 12px 0 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.inputIconR svg { width: 100%; height: 100%; stroke: rgba(255,255,255,0.35); }
+
+/* ─── PHONE FIELD ───────────────────────────────────────── */
+.phoneRow {
+    display: flex;
+    align-items: center;
+    height: 54px;
+    border: 1.5px solid var(--ib);
+    border-radius: 13px;
+    background: rgba(255,255,255,0.045);
+    overflow: hidden;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+}
+
+.phoneRow:focus-within {
+    border-color: rgba(255,255,255,0.22);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.phoneRowErr {
+    border-color: rgba(255,24,58,0.78) !important;
+    box-shadow: 0 0 0 3px rgba(255,24,58,0.18) !important;
+}
+
+.phoneRowLocked { opacity: 0.70; pointer-events: none; }
+
+.phoneInput {
+    flex: 1;
+    height: 100%;
+    padding: 0 4px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 500;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+}
+
+.phoneInput::placeholder { color: rgba(255,255,255,0.28); }
+
+.phoneInput:focus {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.pickerSep {
+    width: 1px;
+    height: 26px;
+    background: rgba(255,255,255,0.12);
+    flex-shrink: 0;
+}
+
+.phoneIconRight {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 14px 0 6px;
+    stroke: rgba(255,255,255,0.22);
+}
+
+/* ─── COUNTRY PICKER ────────────────────────────────────── */
+.picker { position: relative; flex-shrink: 0; }
+
+.pickerBtn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 54px;
+    padding: 0 10px 0 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.18s;
+    white-space: nowrap;
+}
+
+.pickerBtn:hover:not(:disabled) { background: rgba(255,255,255,0.05); }
+.pickerBtnOpen { background: rgba(255,24,58,0.06) !important; }
+.pickerBtn:disabled { cursor: not-allowed; }
+
+.pickerFlag { font-size: 18px; line-height: 1; }
+
+.pickerDial {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.02em;
+}
+
+.pickerChevron {
+    display: flex;
+    align-items: center;
+    width: 12px;
+    height: 12px;
+    color: rgba(255,255,255,0.42);
+    transition: transform 0.2s;
+}
+
+.pickerChevronOpen { transform: rotate(180deg); }
+.pickerChevron svg { width: 100%; height: 100%; }
+
+.pickerDropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 200;
+    min-width: 200px;
+    max-height: 260px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba(255,24,58,0.32);
+    border-radius: 12px;
+    background: rgba(10,1,6,0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.70), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: dropIn 0.16s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,24,58,0.3) transparent;
+}
+
+@keyframes dropIn {
+    from { opacity:0; transform: translateY(-6px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+.pickerItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.14s;
+    font-size: 13.5px;
+}
+
+.pickerItem:hover { background: rgba(255,24,58,0.12); }
+.pickerItemActive { background: rgba(255,24,58,0.18) !important; }
+
+.pickerItemName {
+    flex: 1;
+    color: rgba(255,255,255,0.88);
+    font-weight: 600;
+}
+
+.pickerItemDial {
+    color: rgba(255,255,255,0.44);
+    font-size: 12px;
+}
+
+/* ─── OTP CARD ──────────────────────────────────────────── */
+.otpCard {
+    border: 1px solid rgba(255,24,58,0.25);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(80,4,18,0.35) 0%, rgba(4,0,2,0.50) 100%);
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+@keyframes slideUp {
+    from { opacity:0; transform: translateY(12px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+.otpCardTop {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.otpCardDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(255,24,58,0.7);
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%,100% { box-shadow: 0 0 6px rgba(255,24,58,0.5); }
+    50%      { box-shadow: 0 0 16px rgba(255,24,58,0.9); }
+}
+
+.otpCard h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.otpCardSub {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255,255,255,0.58);
+}
+
+.phoneHighlight { color: var(--gold); font-weight: 700; }
+
+/* OTP digit boxes */
+.otpBoxes {
+    display: flex;
+    gap: 8px;
+    margin: 4px 0 2px;
+    width: 100%;
+}
+
+.otpDigit {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    border: 1.5px solid rgba(255,255,255,0.16);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    text-align: center;
+    outline: none;
+    cursor: text;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s, transform 0.12s;
+}
+
+.otpDigit:focus {
+    border-color: var(--red);
+    background: rgba(255,24,58,0.08);
+    box-shadow: 0 0 0 3px rgba(255,24,58,0.22), 0 0 14px rgba(255,24,58,0.15);
+    transform: scale(1.06);
+}
+
+.otpDigitFilled {
+    border-color: rgba(255,24,58,0.55);
+    background: rgba(255,24,58,0.07);
+}
+
+.otpDigit::placeholder {
+    color: rgba(255,255,255,0.15);
+    font-size: 13px;
+}
+
+/* dev hint */
+.devHint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,181,31,0.3);
+    background: rgba(255,181,31,0.07);
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+}
+
+.devHint svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--gold);
+    opacity: 0.75;
+}
+
+.devHint strong { color: var(--gold); font-weight: 800; font-size: 13px; }
+
+/* ─── API ERROR ─────────────────────────────────────────── */
+.apiError {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,24,58,0.40);
+    background: rgba(255,24,58,0.09);
+    font-size: 13px;
+    font-weight: 700;
+    color: #ff8888;
+    line-height: 1.46;
+    animation: shake 0.28s ease;
+}
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-5px); }
+    75%      { transform: translateX(5px); }
+}
+
+/* ─── BUTTON ────────────────────────────────────────────── */
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 56px;
+    padding: 0 6px 0 24px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(130deg, #8b0e1a 0%, #cc1228 50%, #9c0e1e 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow:
+        0 6px 30px rgba(180,14,34,0.50),
+        0 2px 0 rgba(255,255,255,0.08) inset,
+        0 -2px 0 rgba(0,0,0,0.22) inset;
+    transition: transform 0.16s, box-shadow 0.16s, opacity 0.16s;
+    position: relative;
+    overflow: hidden;
+}
+
+/* shimmer sweep on hover */
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+}
+
+.btn:hover:not(:disabled)::after { transform: translateX(100%); }
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 40px rgba(200,14,38,0.62),
+        0 2px 0 rgba(255,255,255,0.10) inset;
+}
+
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 4px 18px rgba(180,14,34,0.4); }
+.btn:disabled { opacity: 0.58; cursor: not-allowed; }
+
+.btnArrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+    background: rgba(0,0,0,0.25);
+    font-size: 26px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: 0;
+    flex-shrink: 0;
+    transition: background 0.16s;
+}
+
+.btn:hover:not(:disabled) .btnArrow { background: rgba(0,0,0,0.35); }
+
+/* ─── SPINNER ───────────────────────────────────────────── */
+.spin {
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    margin-right: 9px;
+    border: 2.5px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: rot 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* ─── RESEND ────────────────────────────────────────────── */
+.resendRow {
+    margin: -3px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+}
+
+.resendBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.18s;
+}
+
+.resendBtn:hover:not(:disabled) { color: #fff; }
+
+.resendBtnDisabled {
+    color: rgba(255,255,255,0.30) !important;
+    text-decoration: none;
+    cursor: not-allowed;
+    font-weight: 700;
+}
+
+/* ─── DIVIDER ───────────────────────────────────────────── */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1px 0;
+}
+
+.divider span { flex:1; height:1px; background: rgba(255,255,255,0.09); }
+.divider small {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 0.1em;
+}
+
+/* ─── SIGNUP LINK ───────────────────────────────────────── */
+.signupLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    border: 1.5px solid rgba(255,181,31,0.30);
+    border-radius: 12px;
+    background: rgba(255,181,31,0.045);
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.signupLink:hover {
+    border-color: rgba(255,181,31,0.62);
+    background: rgba(255,181,31,0.09);
+    color: #fff;
+    box-shadow: 0 0 18px rgba(255,181,31,0.12);
+}
+
+/* ─── FORGOT PASSWORD ────────────────────────────────────── */
+.forgotSub {
+    margin: 0;
+    color: rgba(255,255,255,0.62);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.forgotLink {
+    text-align: center;
+    margin: -2px 0 0;
+}
+
+.forgotLink button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.45);
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: color 0.18s;
+    padding: 0;
+}
+
+.forgotLink button:hover { color: rgba(255,255,255,0.75); }
+
+.backBtn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.45);
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: color 0.18s;
+    padding: 0;
+}
+
+.backBtn:hover { color: rgba(255,255,255,0.75); }
+
+.forgotDone {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.forgotDoneMsg {
+    color: #2ecc71;
+    font-weight: 700;
+    font-size: 14px;
+    margin: 0 0 6px;
+}
+
+.forgotDoneSub {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    margin: 0 0 14px;
+}
+
+/* ─── FEATURES ──────────────────────────────────────────── */
+.features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,24,58,0.12);
+}
+
+.featureBadge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.featureIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,24,58,0.28);
+    background:
+        radial-gradient(circle at 40% 30%, rgba(255,24,58,0.15), rgba(80,4,18,0.08));
+    box-shadow: 0 0 12px rgba(255,24,58,0.12);
+}
+
+.featureIcon svg { width: 18px; height: 18px; stroke: var(--red); }
+
+.featureBadge strong {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.90);
+    line-height: 1.2;
+}
+
+.featureBadge > span {
+    font-size: 10px;
+    color: rgba(255,255,255,0.42);
+    line-height: 1.3;
+}
+
+/* ─── SUCCESS ───────────────────────────────────────────── */
+.successWrap {
+    padding: 48px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: rise 0.4s ease;
+}
+
+.successIcon {
+    display: flex;
+    width: 70px;
+    height: 70px;
+    color: var(--gold);
+    filter: drop-shadow(0 0 20px rgba(255,181,31,0.50));
+}
+
+.successIcon svg { width: 100%; height: 100%; }
+
+.successWrap h2 { margin: 0; font-size: 22px; font-weight: 900; }
+.successWrap p  { margin: 0; font-size: 14px; color: rgba(255,255,255,0.52); }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 540px) {
+    .page       { padding: 20px 14px; }
+    .card       { border-radius: 20px; }
+    .cardHeader { padding: 18px 20px 16px; }
+    .cardBody   { padding: 20px 20px 26px; gap: 12px; min-height: 390px; }
+    .titleText  { font-size: 19px; }
+    .brandName  { font-size: 18px; }
+    .logoRing   { width: 48px; height: 48px; border-radius: 12px; }
+    .btn        { height: 52px; font-size: 14px; padding: 0 4px 0 20px; }
+    .btnArrow   { width: 42px; height: 42px; }
+    .otpDigit   { height: 50px; font-size: 19px; }
+    .otpBoxes   { gap: 6px; }
+    .otpCard    { padding: 14px 12px 16px; }
+    .phoneRow   { height: 52px; border-radius: 11px; }
+    .pickerBtn  { height: 52px; }
+    .inputRow   { height: 52px; border-radius: 11px; }
+}
+
+@media (max-width: 400px) {
+    .page       { padding: 16px 12px; }
+    .card       { border-radius: 18px; }
+    .cardHeader { padding: 16px 16px 14px; }
+    .cardBody   { padding: 18px 16px 22px; gap: 11px; min-height: 360px; }
+    .otpDigit   { height: 46px; font-size: 17px; }
+    .otpBoxes   { gap: 5px; }
+    .otpCard    { padding: 12px 10px 14px; }
+    .titleText  { font-size: 17px; }
+    .brandName  { font-size: 16px; }
+    .logoRing   { width: 44px; height: 44px; border-radius: 11px; }
+    .pickerDial { font-size: 12.5px; }
+    .inputRow   { height: 50px; border-radius: 11px; }
+    .phoneRow   { height: 50px; border-radius: 11px; }
+    .pickerBtn  { height: 50px; }
+}
+
+@media (max-height: 680px) and (max-width: 900px) {
+    .page     { padding: 12px 14px; align-items: flex-start; }
+    .cardBody { gap: 10px; }
+    .cardHeader { padding: 13px 18px 11px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REFERENCE-MATCH AUTH SHELL
+   CSS-only layout upgrade for desktop, laptop, tablet and mobile.
+═══════════════════════════════════════════════════════════ */
+.page {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(14px, 2.2vw, 34px);
+    background:
+        radial-gradient(circle at 50% 100%, rgba(198, 18, 36, 0.34), transparent 34%),
+        radial-gradient(circle at 12% 12%, rgba(180, 4, 28, 0.18), transparent 30%),
+        linear-gradient(180deg, #090105 0%, #140207 54%, #2a050c 100%);
+}
+
+.page::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image: url('../../../images/pages/login-ludo.png');
+    background-position: center;
+    background-size: cover;
+    opacity: 0.2;
+    filter: saturate(1.1) contrast(1.05);
+}
+
+.page::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(90deg, rgba(2, 0, 2, 0.78), rgba(14, 1, 6, 0.42) 48%, rgba(45, 3, 10, 0.7)),
+        radial-gradient(circle at 50% 40%, transparent 0 18%, rgba(0, 0, 0, 0.5) 76%);
+    pointer-events: none;
+}
+
+@media (min-width: 768px) {
+    .card {
+        width: min(94vw, 1180px);
+        max-width: none;
+        min-height: clamp(470px, 58vw, 620px);
+        border-radius: 16px;
+        background:
+            linear-gradient(90deg, rgba(9, 0, 4, 0.14) 0 51%, rgba(10, 1, 5, 0.96) 51% 100%);
+        overflow: hidden;
+    }
+
+    .card::after {
+        content: '';
+        position: absolute;
+        inset: 0 49% 0 0;
+        z-index: 0;
+        background:
+            linear-gradient(90deg, rgba(5, 0, 3, 0.18), rgba(9, 0, 5, 0.24) 58%, rgba(8, 0, 4, 0.72)),
+            url('../../../images/pages/login-ludo.png') center / cover no-repeat;
+        filter: saturate(1.15) contrast(1.02);
+    }
+
+    .cardHeader,
+    .cardBody {
+        position: relative;
+        z-index: 2;
+        width: 49%;
+        margin-left: auto;
+    }
+
+    .cardHeader {
+        gap: 10px;
+        padding: clamp(14px, 1.5vw, 20px) clamp(18px, 2vw, 28px) 10px;
+        background: transparent;
+        border-bottom: 0;
+    }
+
+    .cardBody {
+        min-height: 0;
+        padding: 8px clamp(26px, 4.2vw, 58px) clamp(20px, 3vw, 36px);
+        gap: clamp(10px, 1.2vw, 14px);
+    }
+
+    .logoRing {
+        width: clamp(40px, 4vw, 52px);
+        height: clamp(40px, 4vw, 52px);
+        border-radius: 11px;
+    }
+
+    .brandName { font-size: clamp(16px, 1.65vw, 21px); }
+    .brandSub  { font-size: clamp(8px, 0.78vw, 10px); }
+    .titleText { font-size: clamp(18px, 1.75vw, 24px); }
+    .titleSub  { font-size: clamp(11px, 1vw, 13px); }
+
+    .tabs {
+        border-radius: 8px;
+        padding: 3px;
+    }
+
+    .tabBtn {
+        height: clamp(30px, 3vw, 36px);
+        border-radius: 6px;
+        font-size: clamp(10px, 0.92vw, 12px);
+    }
+
+    .inputRow,
+    .phoneRow,
+    .pickerBtn {
+        height: clamp(40px, 4vw, 50px);
+        border-radius: 8px;
+    }
+
+    .btn {
+        height: clamp(42px, 4.2vw, 52px);
+        border-radius: 8px;
+        font-size: clamp(12px, 1vw, 14px);
+        padding-left: 22px;
+    }
+
+    .btnArrow {
+        width: clamp(34px, 3.5vw, 42px);
+        height: clamp(34px, 3.5vw, 42px);
+        border-radius: 7px;
+    }
+
+    .signupLink {
+        height: clamp(38px, 3.8vw, 46px);
+        border-radius: 8px;
+        font-size: clamp(11px, 1vw, 13px);
+    }
+
+    .otpCard {
+        border-radius: 8px;
+        padding: clamp(12px, 1.4vw, 18px);
+    }
+
+    .otpBoxes { gap: clamp(6px, 0.8vw, 10px); }
+
+    .otpDigit {
+        height: clamp(42px, 4.2vw, 56px);
+        border-radius: 7px;
+    }
+
+    .features { padding-top: 10px; }
+
+    .card:has(.successWrap) {
+        width: min(94vw, 520px);
+        min-height: auto;
+        background: var(--card-bg);
+    }
+
+    .card:has(.successWrap)::after { display: none; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .card {
+        width: min(94vw, 860px);
+        min-height: 520px;
+        background:
+            linear-gradient(90deg, rgba(9, 0, 4, 0.16) 0 45%, rgba(10, 1, 5, 0.96) 45% 100%);
+    }
+
+    .card::after { inset-right: 55%; }
+
+    .cardHeader,
+    .cardBody {
+        width: 55%;
+    }
+
+    .cardBody {
+        padding-left: 28px;
+        padding-right: 28px;
+    }
+}
+
+@media (max-width: 767px) {
+    .page {
+        align-items: center;
+        padding: 14px;
+    }
+
+    .card {
+        max-width: 430px;
+        border-radius: 18px;
+    }
+
+    .card::after { display: none; }
+
+    .page::before {
+        opacity: 0.18;
+        background-position: center;
+    }
+}
+
+@media (min-width: 1440px) {
+    .card {
+        width: min(88vw, 1320px);
+        min-height: 620px;
+    }
+
+    .cardBody {
+        padding-left: 64px;
+        padding-right: 64px;
+    }
+}
+
+/* Clean icon treatment: no filled red blocks inside fields. */
+.inputRow,
+.phoneRow {
+    background: rgba(18, 6, 12, 0.82);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.inputRow:focus-within,
+.phoneRow:focus-within {
+    background: rgba(20, 7, 13, 0.92);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.055);
+}
+
+.inputRowErr,
+.phoneRowErr {
+    background: rgba(18, 6, 12, 0.86) !important;
+}
+
+.inputIconL,
+.inputIconR,
+.phoneIconRight {
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.inputIconL svg,
+.inputIconR svg,
+.phoneIconRight {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 1.65;
+    opacity: 0.92;
+}
+
+.inputIconR {
+    width: 30px;
+    height: 30px;
+    margin: 0 10px 0 4px;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    border-radius: 50%;
+}
+
+.inputIconR:hover {
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.phoneIconRight {
+    margin-right: 14px;
+}
+
+.pickerBtn,
+.pickerBtnOpen {
+    background: transparent !important;
+}
+
+.pickerBtn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.035) !important;
+}
+
+.pickerSep {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.btnArrow {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    color: transparent;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btnArrow::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-top: 2px solid #fff;
+    border-right: 2px solid #fff;
+    transform: translateX(-1px) rotate(45deg);
+}
+
+.btn:hover:not(:disabled) .btnArrow {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+/* Final mobile pass for all login states: phone, OTP, reset password, success. */
+@media (max-width: 600px) {
+    .page {
+        align-items: stretch;
+        min-height: 100dvh;
+        padding: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .page::before {
+        background-image: url('../../../images/pages/login-ludo-3.png');
+        background-position: center top;
+        opacity: 0.24;
+    }
+
+    .page::after {
+        background:
+            linear-gradient(180deg, rgba(3, 0, 3, 0.76), rgba(16, 1, 7, 0.68) 44%, rgba(38, 3, 11, 0.82)),
+            radial-gradient(circle at 50% 18%, rgba(255, 26, 54, 0.2), transparent 46%);
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        min-height: 100dvh;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background:
+            linear-gradient(180deg, rgba(4, 0, 3, 0.88), rgba(13, 1, 6, 0.74) 46%, rgba(35, 2, 10, 0.9)),
+            transparent;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .card::before {
+        height: 1px;
+    }
+
+    .cardHeader {
+        gap: 9px;
+        width: min(100% - 28px, 390px);
+        margin: 0 auto;
+        padding: max(16px, env(safe-area-inset-top)) 0 10px;
+        background: transparent;
+        border-bottom: 0;
+    }
+
+    .logoRing {
+        width: 35px;
+        height: 35px;
+        border-radius: 9px;
+    }
+
+    .brandName {
+        font-size: 13px;
+        letter-spacing: 0.08em;
+    }
+
+    .brandSub {
+        font-size: 6.8px;
+        letter-spacing: 0.18em;
+    }
+
+    .cardBody {
+        width: min(100% - 28px, 390px);
+        margin: 0 auto;
+        min-height: auto;
+        padding: 12px 14px 18px;
+        gap: 11px;
+        border: 1px solid rgba(255, 24, 58, 0.34);
+        border-radius: 18px;
+        background: rgba(8, 1, 5, 0.82);
+        box-shadow:
+            0 18px 48px rgba(0, 0, 0, 0.46),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(10px);
+    }
+
+    .titleRow {
+        gap: 6px;
+        margin-bottom: 3px;
+    }
+
+    .titleText {
+        max-width: 100%;
+        font-size: clamp(15px, 5vw, 19px);
+        white-space: normal;
+        line-height: 1.15;
+    }
+
+    .titleSub,
+    .forgotSub,
+    .otpCardSub,
+    .forgotDoneSub {
+        font-size: 10.5px;
+        line-height: 1.35;
+    }
+
+    .tabs {
+        gap: 3px;
+        padding: 3px;
+        border-radius: 9px;
+    }
+
+    .tabBtn {
+        height: 29px;
+        border-radius: 7px;
+        font-size: 9.5px;
+        letter-spacing: 0;
+    }
+
+    .inputRow,
+    .phoneRow,
+    .pickerBtn {
+        height: 42px;
+        border-radius: 8px;
+    }
+
+    .inputRow input,
+    .phoneInput {
+        font-size: 12px;
+    }
+
+    .inputIconL {
+        width: 15px;
+        height: 15px;
+        margin-left: 10px;
+        margin-right: 8px;
+    }
+
+    .inputIconR {
+        width: 28px;
+        height: 28px;
+        margin-right: 7px;
+    }
+
+    .inputIconL svg,
+    .inputIconR svg,
+    .phoneIconRight {
+        width: 16px;
+        height: 16px;
+    }
+
+    .pickerBtn {
+        gap: 4px;
+        padding: 0 7px 0 9px;
+    }
+
+    .pickerFlag {
+        font-size: 14px;
+    }
+
+    .pickerDial {
+        font-size: 10.5px;
+    }
+
+    .pickerChevron {
+        width: 10px;
+        height: 10px;
+    }
+
+    .pickerDropdown {
+        min-width: 178px;
+        max-height: min(240px, 52dvh);
+        border-radius: 10px;
+    }
+
+    .phoneIconRight {
+        margin-right: 10px;
+    }
+
+    .fieldErr,
+    .apiError {
+        font-size: 10.5px;
+        line-height: 1.35;
+    }
+
+    .apiError {
+        padding: 8px 10px;
+        border-radius: 8px;
+    }
+
+    .otpCard {
+        gap: 8px;
+        padding: 11px 10px 12px;
+        border-radius: 9px;
+    }
+
+    .otpCard h3 {
+        font-size: 12px;
+    }
+
+    .otpBoxes {
+        gap: 5px;
+    }
+
+    .otpDigit {
+        height: clamp(38px, 11.5vw, 45px);
+        border-radius: 7px;
+        font-size: 16px;
+    }
+
+    .devHint {
+        max-width: 100%;
+        padding: 4px 8px;
+        border-radius: 7px;
+        font-size: 10px;
+    }
+
+    .btn {
+        height: 42px;
+        padding: 0 4px 0 15px;
+        border-radius: 9px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+    }
+
+    .btnArrow {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+    }
+
+    .signupLink {
+        height: 38px;
+        border-radius: 8px;
+        font-size: 10.5px;
+    }
+
+    .divider {
+        gap: 8px;
+        margin: -1px 0;
+    }
+
+    .forgotLink,
+    .resendRow {
+        margin-top: -2px;
+        font-size: 10.5px;
+    }
+
+    .features {
+        width: min(100% - 28px, 390px);
+        margin: auto auto max(12px, env(safe-area-inset-bottom));
+        gap: 4px;
+        padding-top: 8px;
+    }
+
+    .featureIcon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .featureIcon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .featureBadge strong {
+        font-size: 8.5px;
+    }
+
+    .featureBadge > span {
+        display: none;
+    }
+
+    .successWrap {
+        width: min(100% - 28px, 390px);
+        min-height: 320px;
+        margin: auto;
+        justify-content: center;
+        padding: 34px 18px;
+        border: 1px solid rgba(255, 24, 58, 0.34);
+        border-radius: 18px;
+        background: rgba(8, 1, 5, 0.82);
+    }
+
+    .successIcon {
+        width: 58px;
+        height: 58px;
+    }
+}
+
+@media (max-width: 360px) {
+    .page {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .cardHeader {
+        padding-left: 11px;
+        padding-right: 11px;
+    }
+
+    .cardBody {
+        width: min(100% - 18px, 390px);
+        padding-left: 10px;
+        padding-right: 10px;
+        gap: 8px;
+    }
+
+    .otpBoxes {
+        gap: 4px;
+    }
+
+    .otpDigit {
+        height: 38px;
+        font-size: 15px;
+    }
+}
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    background: linear-gradient(135deg, #1db85a 0%, #16a34a 100%);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.toastVisible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
