@@ -1,6 +1,6 @@
 const canPawnMove = (pawn, rolledNumber) => {
-    // If is in base
-    if ((rolledNumber === 1 || rolledNumber === 6) && pawn.position === pawn.basePos) {
+    // If is in base — only a 6 exits a home token (matches backend pawnLogic.canMove)
+    if (rolledNumber === 6 && pawn.position === pawn.basePos) {
         return true;
         // Other situations: pawn is on map or pawn is in end positions
     } else if (pawn.position !== pawn.basePos) {

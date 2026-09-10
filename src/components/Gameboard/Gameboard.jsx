@@ -5,14 +5,28 @@ import { PlayerDataContext, SocketContext, SetPlayerDataContext, RoomSocketConte
 import { useAuth } from '../../context/AuthContext';
 import useSocketData from '../../hooks/useSocketData';
 import Map from './Map/Map';
-import Navbar from '../Navbar/Navbar';
+import NameContainer from '../Navbar/NameContainer/NameContainer';
+import ReadyButton from '../Navbar/ReadyButton/ReadyButton';
 import Dice from '../Navbar/Dice/Dice';
-import StatusFooter from './StatusFooter';
 import Overlay from '../Overlay/Overlay';
 import styles from './Gameboard.module.css';
 import trophyImage from '../../images/trophy.webp';
 import logoDice from '../../images/pages/ludi-profile.png';
 import homeSound from '../../images/dice/dice.mp3';
+import { getLocalPerspective } from './perspective';
+import { MAX_ROLL_ANIMATION_MS } from '../Navbar/Dice/diceTiming';
+
+// Maps a *visual* board corner (post-perspective-rotation) to which side of
+// the dice the "Roll Dice" label sits on, and to the badge's own CSS class —
+// the badge is the single positioned box per corner; the dice renders inside
+// it (see hasDice below) rather than as a separate overlay.
+const CORNER_LABEL_SIDE = { TL: 'below', TR: 'below', BL: 'above', BR: 'above' };
+const BADGE_CORNER_CLASS = {
+    TL: 'playerBadgeTL',
+    TR: 'playerBadgeTR',
+    BL: 'playerBadgeBL',
+    BR: 'playerBadgeBR',
+};
 
 /* ── Inline SVG icon set (no extra dependency) ── */
 const GIcon = React.memo(({ type, size = 20, className }) => {
@@ -444,6 +458,23 @@ const Gameboard = () => {
     const [started, setStarted] = useState(false);
 
     const [movingPlayer, setMovingPlayer] = useState('red');
+
+    // Pins the dice overlay to whoever just rolled for the full animation
+    // duration, so a fast server turn-pass (e.g. no legal move, single pawn
+    // stuck) can't yank the dice to a different corner mid-animation. Purely
+    // a UI concern — the actual turn/move logic below is unaffected.
+    const [pinnedMover, setPinnedMover] = useState(null);
+    const pinTimeoutRef = useRef(null);
+    useEffect(() => {
+        if (rolledNumber === null || rolledNumber === undefined) return undefined;
+        setPinnedMover(movingPlayer);
+        if (pinTimeoutRef.current) clearTimeout(pinTimeoutRef.current);
+        pinTimeoutRef.current = setTimeout(() => setPinnedMover(null), MAX_ROLL_ANIMATION_MS);
+        return undefined;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rolledNumber]);
+    useEffect(() => () => { if (pinTimeoutRef.current) clearTimeout(pinTimeoutRef.current); }, []);
+    const diceMover = pinnedMover || movingPlayer;
 
     const navigate = useNavigate();
 
@@ -1203,16 +1234,6 @@ const Gameboard = () => {
                         {/* ── PLAY AREA ── */}
                         <section className={styles.playArea}>
                             <section className={styles.boardGrid}>
-                                <Navbar
-                                    players={players}
-                                    started={started}
-                                    time={time}
-                                    isReady={isReady}
-                                    movingPlayer={movingPlayer}
-                                    rolledNumber={rolledNumber}
-                                    nowMoving={nowMoving}
-                                    ended={winner !== null}
-                                />
                                 <div
                                     className={`${styles.boardPanel} ${nowMoving ? styles.yourTurnBoard : ''} ${
                                         nowMoving && rolledNumber ? styles.pickPawnBoard : ''
@@ -1223,24 +1244,52 @@ const Gameboard = () => {
                                             {rolledNumber ? 'Pick a pawn' : 'Roll the dice'}
                                         </div>
                                     ) : null}
+                                    {players
+                                        .filter(p => p.name !== '...')
+                                        .map(p => {
+                                            // Each player's own compact profile badge sits right at
+                                            // their own board corner — wherever that visually lands
+                                            // for THIS viewer once the local rotation is applied.
+                                            // The dice lives INSIDE that same badge, as one box,
+                                            // whenever this is the (pinned) player currently rolling.
+                                            const corner = getLocalPerspective(context.color).visualCornerOf(p.color);
+                                            if (!corner) return null;
+                                            const isCurrentTurn = started && winner === null && p.nowMoving;
+                                            const isSelf = context.color === p.color;
+                                            const hasReadyAction = isSelf && !started;
+                                            const hasDice = p.color === diceMover;
+                                            return (
+                                                <div
+                                                    key={p._id || p.color}
+                                                    className={`${styles.playerBadge} ${styles[BADGE_CORNER_CLASS[corner]] || ''} ${
+                                                        isCurrentTurn ? styles.playerBadgeActive : ''
+                                                    }`}
+                                                >
+                                                    <NameContainer player={p} time={time} />
+                                                    <div className={styles.playerBadgeInfo}>
+                                                        {isSelf ? <span className={styles.playerBadgeYou}>You</span> : null}
+                                                        {hasReadyAction ? <ReadyButton isReady={isReady} /> : null}
+                                                    </div>
+                                                    {hasDice ? (
+                                                        <div className={styles.playerBadgeDice}>
+                                                            <Dice
+                                                                variant='dock'
+                                                                rolledNumber={rolledNumber}
+                                                                nowMoving={nowMoving}
+                                                                movingPlayer={diceMover}
+                                                                playerColor={diceMover}
+                                                                labelSide={CORNER_LABEL_SIDE[corner]}
+                                                            />
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            );
+                                        })}
                                     <Map pawns={pawns} nowMoving={nowMoving} rolledNumber={rolledNumber} />
                                 </div>
                             </section>
 
                             <section className={styles.actionDock} aria-label='Game actions'>
-                                <div className={styles.rollDock}>
-                                    <Dice
-                                        variant='dock'
-                                        rolledNumber={rolledNumber}
-                                        nowMoving={nowMoving}
-                                        movingPlayer={movingPlayer}
-                                        playerColor={context.color}
-                                    />
-                                    <div>
-                                        <strong>Roll Dice</strong>
-                                        <span>Get 6 to move out</span>
-                                    </div>
-                                </div>
                                 <div className={styles.turnTimer}>
                                     <span>Your Turn</span>
                                     <strong>18s</strong>
@@ -1265,10 +1314,6 @@ const Gameboard = () => {
                             </div>
                         </section>
 
-                        {/* ── STATUS FOOTER ── */}
-                        {/* Ping and clock state live inside StatusFooter — their
-                            updates are isolated and never re-render Gameboard. */}
-                        <StatusFooter socket={socket} gameStarted={gameStarted} />
                     </div>
                 </main>
             ) : gameStarted ? (

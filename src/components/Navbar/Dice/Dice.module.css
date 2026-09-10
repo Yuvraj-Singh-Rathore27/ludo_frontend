@@ -9,12 +9,14 @@
 
 .cardContainer {
     display: none;
+    --dice-half: 21px;
 }
 
 .dockContainer {
     position: relative;
-    width: 78px;
-    height: 78px;
+    width: 56px;
+    height: 56px;
+    --dice-half: 28px;
 }
 
 .dockContainer::before {
@@ -74,7 +76,135 @@
 }
 
 .resultDie {
-    animation: diceLand 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+    /* static — no landing animation */
+}
+
+/* ── 3D rolling cube ─────────────────────────────────────────────────────── */
+
+.diceBounceWrap {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.diceBounceWrap.spinning {
+    animation: diceShake 0.28s ease-in-out infinite;
+}
+
+.diceBounceWrap.landed {
+    animation: diceImpact 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.diceScene {
+    width: 100%;
+    height: 100%;
+    perspective: 320px;
+}
+
+.dice3d {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+.dice3d.spinning {
+    animation: diceTumble 0.7s linear infinite;
+}
+
+.dice3d.landing {
+    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.diceFace {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 32% 28%, #fff, #e5e5ea 72%);
+    border-radius: 20%;
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.3);
+    backface-visibility: hidden;
+}
+
+.diceFace img {
+    width: 68%;
+    height: 68%;
+    object-fit: contain;
+}
+
+.faceFront {
+    transform: translateZ(var(--dice-half, 39px));
+}
+
+.faceBack {
+    transform: rotateY(180deg) translateZ(var(--dice-half, 39px));
+}
+
+.faceRight {
+    transform: rotateY(90deg) translateZ(var(--dice-half, 39px));
+}
+
+.faceLeft {
+    transform: rotateY(-90deg) translateZ(var(--dice-half, 39px));
+}
+
+.faceTop {
+    transform: rotateX(90deg) translateZ(var(--dice-half, 39px));
+}
+
+.faceBottom {
+    transform: rotateX(-90deg) translateZ(var(--dice-half, 39px));
+}
+
+@keyframes diceTumble {
+    0% {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    }
+
+    25% {
+        transform: rotateX(160deg) rotateY(110deg) rotateZ(60deg);
+    }
+
+    50% {
+        transform: rotateX(250deg) rotateY(230deg) rotateZ(140deg);
+    }
+
+    75% {
+        transform: rotateX(310deg) rotateY(300deg) rotateZ(250deg);
+    }
+
+    100% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+    }
+}
+
+@keyframes diceShake {
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    50% {
+        transform: translate(1px, -3px);
+    }
+}
+
+@keyframes diceImpact {
+    0% {
+        transform: scale(1.16) translateY(-4px);
+    }
+
+    55% {
+        transform: scale(0.94) translateY(1px);
+    }
+
+    100% {
+        transform: scale(1) translateY(0);
+    }
 }
 
 .resultBadge {
@@ -97,7 +227,6 @@
     box-shadow:
         0 4px 10px rgba(0, 0, 0, 0.45),
         inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    animation: resultBadgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .cardContainer .resultDie,
@@ -112,6 +241,60 @@
     font-size: 12px;
     top: -4px;
     right: -4px;
+}
+
+.rollPrompt {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Sits just to the board-side of the dice — stays inside the dice overlay's
+   own already-safe footprint instead of extending further off-screen. */
+.rollLabel {
+    position: absolute;
+    left: 50%;
+    z-index: 5;
+    padding: 3px 9px;
+    border: 1px solid rgba(255, 207, 25, 0.55);
+    border-radius: 999px;
+    background: rgba(20, 4, 6, 0.92);
+    color: #ffcf19;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    transform: translateX(-50%);
+}
+
+.rollPromptBelow .rollLabel {
+    top: 100%;
+    margin-top: 4px;
+}
+
+.rollPromptAbove .rollLabel {
+    bottom: 100%;
+    margin-bottom: 4px;
+}
+
+/* "No move available" — sits on the same board-side spot the roll label used,
+   shown briefly after the dice finishes landing with no legal move. */
+.noMoveBelow {
+    top: 100%;
+    margin-top: 4px;
+    border-color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.noMoveAbove {
+    bottom: 100%;
+    margin-bottom: 4px;
+    border-color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .rollButton {
@@ -142,114 +325,16 @@
 }
 
 .dockContainer .rollButton {
-    width: 78px;
-    height: 78px;
+    width: 56px;
+    height: 56px;
 }
 
 .cardContainer .rollButton::before {
     display: none;
 }
 
-.readyToRoll {
-    animation: rollInvite 1.25s ease-in-out infinite;
-}
-
-.rolling > img {
-    animation: diceRolling 0.4s linear infinite;
-    will-change: transform;
-    filter:
-        drop-shadow(0 0 12px rgba(255, 215, 50, 0.9))
-        drop-shadow(0 0 24px rgba(255, 155, 20, 0.6))
-        drop-shadow(0 24px 30px rgba(0, 0, 0, 0.65));
-}
-
 .rollButton:disabled {
     cursor: wait;
-}
-
-@keyframes rollInvite {
-    0%,
-    100% {
-        transform: translateY(0) rotate(0deg);
-    }
-
-    50% {
-        transform: translateY(-4px) rotate(-4deg);
-    }
-}
-
-@keyframes diceRolling {
-    0% {
-        transform: perspective(280px) rotateX(0deg) rotateZ(0deg) scale(1);
-    }
-
-    14% {
-        transform: perspective(280px) rotateX(52deg) rotateZ(51deg) scale(1.09);
-    }
-
-    28% {
-        transform: perspective(280px) rotateX(104deg) rotateZ(102deg) scale(1.05);
-    }
-
-    42% {
-        transform: perspective(280px) rotateX(156deg) rotateZ(153deg) scale(1.11);
-    }
-
-    57% {
-        transform: perspective(280px) rotateX(208deg) rotateZ(207deg) scale(1.06);
-    }
-
-    71% {
-        transform: perspective(280px) rotateX(260deg) rotateZ(258deg) scale(1.1);
-    }
-
-    85% {
-        transform: perspective(280px) rotateX(312deg) rotateZ(309deg) scale(1.04);
-    }
-
-    100% {
-        transform: perspective(280px) rotateX(360deg) rotateZ(360deg) scale(1);
-    }
-}
-
-@keyframes diceLand {
-    0% {
-        transform: scale(1.18) rotate(-6deg);
-        opacity: 0.85;
-        filter:
-            drop-shadow(0 0 14px rgba(255, 210, 50, 0.9))
-            drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
-    }
-
-    45% {
-        transform: scale(1.04) rotate(-1deg);
-        opacity: 1;
-    }
-
-    100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-        filter:
-            drop-shadow(0 20px 26px rgba(0, 0, 0, 0.5))
-            drop-shadow(0 0 18px rgba(255, 68, 74, 0.22));
-    }
-}
-
-@keyframes resultBadgePop {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-
-    60% {
-        transform: scale(1.15);
-        opacity: 1;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
 }
 
 @keyframes turnArrowPulse {
@@ -272,8 +357,12 @@
 
     .dockContainer,
     .dockContainer .rollButton {
-        width: 72px;
-        height: 72px;
+        width: 52px;
+        height: 52px;
+    }
+
+    .dockContainer {
+        --dice-half: 26px;
     }
 }
 
@@ -282,6 +371,10 @@
     .dockContainer .rollButton {
         width: clamp(46px, 15vw, 58px);
         height: clamp(46px, 15vw, 58px);
+    }
+
+    .dockContainer {
+        --dice-half: clamp(23px, 7.5vw, 29px);
     }
 
     .dockContainer .resultBadge {
@@ -306,6 +399,10 @@
         height: 52px;
     }
 
+    .dockContainer {
+        --dice-half: 26px;
+    }
+
     .dockContainer .resultBadge {
         min-width: 17px;
         height: 17px;
@@ -322,6 +419,10 @@
         height: 46px;
     }
 
+    .dockContainer {
+        --dice-half: 23px;
+    }
+
     .dockContainer .resultBadge {
         min-width: 15px;
         height: 15px;
@@ -332,14 +433,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .readyToRoll,
-    .rolling > img,
-    .resultDie,
-    .resultBadge,
     .turnIndicator::after {
         animation: none;
-        filter:
-            drop-shadow(0 20px 26px rgba(0, 0, 0, 0.5))
-            drop-shadow(0 0 18px rgba(255, 68, 74, 0.22));
+    }
+
+    .dice3d.spinning,
+    .diceBounceWrap.spinning,
+    .diceBounceWrap.landed {
+        animation: none;
+    }
+
+    .dice3d.landing {
+        transition: none;
     }
 }

@@ -438,6 +438,92 @@
     touch-action: manipulation;
 }
 
+/* Compact per-player profile badge — sits right on the board's own border at
+   its own corner (matching perspective.js's visualCornerOf), rather than
+   floating above/below the board in the empty space outside it. When this is
+   the player currently rolling, the dice renders INSIDE this same box (see
+   .playerBadgeDice) rather than as a separate overlay, so profile + dice
+   always read as one unit with consistent spacing between them.
+   Fixed square size — width never depends on whether this player currently
+   holds the dice, so nothing resizes/reflows when the turn changes. */
+.playerBadge {
+    position: absolute;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 1vw, 6px);
+    width: clamp(100px, 28vw, 170px);
+    padding: clamp(2px, 0.6vw, 4px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
+    background: rgba(9, 13, 20, 0.92);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    --corner-offset: clamp(-16px, -3vw, -6px);
+}
+
+.playerBadgeActive {
+    border-color: rgba(255, 207, 25, 0.65);
+    box-shadow:
+        0 0 0 1px rgba(255, 207, 25, 0.35),
+        0 10px 26px rgba(255, 207, 25, 0.25);
+}
+
+.playerBadgeDice {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 2px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.playerBadgeInfo {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.playerBadgeYou {
+    display: inline-block;
+    margin-left: 0;
+    padding: 1px clamp(3px, 1vw, 5px);
+    border-radius: 999px;
+    background: #cc1e27;
+    color: #fff;
+    font-size: clamp(7px, 1.8vw, 8px);
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+/* bottom/top: 100% pins the badge flush against the board edge regardless of
+   the badge's own (variable) height, then margin adds an exact 2px gap —
+   far more reliable than guessing a pixel offset that has to out-guess
+   dynamic content height at every breakpoint. */
+.playerBadgeTL {
+    bottom: 100%;
+    left: var(--corner-offset);
+    margin-bottom: 2px;
+}
+
+.playerBadgeTR {
+    bottom: 100%;
+    right: var(--corner-offset);
+    margin-bottom: 2px;
+}
+
+.playerBadgeBL {
+    top: 100%;
+    left: var(--corner-offset);
+    margin-top: 2px;
+}
+
+.playerBadgeBR {
+    top: 100%;
+    right: var(--corner-offset);
+    margin-top: 2px;
+}
+
 .pickPawnBoard .canvas {
     cursor: pointer;
 }
@@ -1303,13 +1389,8 @@
     .boardGrid {
         width: var(--mobile-content);
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: repeat(4, minmax(clamp(33px, 5.1dvh, 42px), auto)) auto;
-        grid-template-areas:
-            'red'
-            'yellow'
-            'blue'
-            'green'
-            'board';
+        grid-template-rows: auto;
+        grid-template-areas: 'board';
         align-items: stretch;
         justify-items: center;
         justify-self: center;
@@ -1497,7 +1578,6 @@
     }
 
     .boardGrid {
-        grid-template-rows: repeat(4, minmax(36px, auto)) auto;
         gap: 4px;
     }
 
@@ -1588,7 +1668,6 @@
     }
 
     .boardGrid {
-        grid-template-rows: repeat(4, minmax(33px, auto)) auto;
         gap: 3px;
     }
 
