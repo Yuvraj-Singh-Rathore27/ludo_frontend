@@ -5,6 +5,8 @@ import positionMapCoords from '../positions';
 import pawnImages from '../../../constants/pawnImages';
 import canPawnMove from './canPawnMove';
 import getPositionAfterMove from './getPositionAfterMove';
+import { isValidPawnPosition } from './boardPath';
+import { layoutPawns, BASE_HIT_RADIUS } from './stackLayout';
 import { getLocalPerspective, rotatePoint } from '../perspective';
 import { MIN_SPIN_MS, LANDING_MS, RESULT_HOLD_MS } from '../../Navbar/Dice/diceTiming';
 import styles from '../Gameboard.module.css';
@@ -63,6 +65,7 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);           // cached 2d context — not re-fetched on every event
     const touchableAreasRef = useRef({});  // Path2D map keyed by pawn._id — never mutates props
+    const drawOrderRef = useRef([]);       // pawns in draw order (top-most last) for hit testing
     const rafRef = useRef(null);           // pending RAF handle for mousemove throttle
     const hintPawnRef = useRef(null);      // mirrors hintPawn state without triggering renders
 
@@ -100,11 +103,15 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
             // ground shadow plus a glossy highlight (confined to the pawn's own
             // silhouette via 'source-atop') gives each flat token a 3D, rounded feel
             // without new artwork or a rendering-framework change.
-            const drawUpright = (img, x, y) => {
+            // offsetX/offsetY/scale spread pawns that share a cell; they are applied in
+            // the upright frame so the spread looks the same for every board rotation.
+            const drawUpright = (img, x, y, offsetX = 0, offsetY = 0, scale = 1) => {
                 if (!img?.complete) return;
                 ctx.save();
                 ctx.translate(x, y);
                 ctx.rotate((-rotation * Math.PI) / 180);
+                ctx.translate(offsetX, offsetY);
+                ctx.scale(scale, scale);
 
                 // Ground shadow — depth cue, sits just below the token's base
                 const shadowGrad = ctx.createRadialGradient(0, 12, 0, 0, 12, 11);
@@ -138,18 +145,51 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
                 ctx.restore();
             };
 
-            // Build fresh Path2D hit areas — stored in ref, never written to prop objects
+            // Small count badge for cells holding more pawns than the mini-grid has slots.
+            const drawCountBadge = (x, y, count) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate((-rotation * Math.PI) / 180);
+                ctx.beginPath();
+                ctx.arc(11, -11, 7, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(String(count), 11, -11);
+                ctx.restore();
+            };
+
+            // Never draw a pawn on a cell outside its own colour's path (e.g. a blue
+            // pawn in red's home column). The server repairs such boards on load and
+            // resyncs clients, so this only guards against a bad payload reaching us.
+            const legalPawns = pawns.filter(pawn => {
+                if (isValidPawnPosition(pawn)) return true;
+                console.error('[BOARD_INTEGRITY] skipping illegal pawn', pawn);
+                return false;
+            });
+
+            // Build fresh Path2D hit areas — stored in refs, never written to prop objects.
+            // Each hit area sits where its pawn is actually drawn (including the stack
+            // offset, converted back into canonical canvas space).
+            const layout = layoutPawns(legalPawns, player.color);
             const areas = {};
-            pawns.forEach(pawn => {
+            layout.forEach(({ pawn, offsetX, offsetY, scale, stackSize, showCount }) => {
                 const { x, y } = positionMapCoords[pawn.position];
+                const center = rotatePoint(x + offsetX, y + offsetY, x, y, -rotation);
 
                 const area = new Path2D();
-                area.arc(x, y, 12, 0, 2 * Math.PI);
+                area.arc(center.x, center.y, BASE_HIT_RADIUS * scale, 0, 2 * Math.PI);
                 areas[pawn._id] = area;
 
-                drawUpright(PAWN_IMAGES[pawn.color], x, y);
+                drawUpright(PAWN_IMAGES[pawn.color], x, y, offsetX, offsetY, scale);
+                if (showCount) drawCountBadge(x, y, stackSize);
             });
             touchableAreasRef.current = areas;
+            // Top-most pawn last — hit testing walks this in reverse.
+            drawOrderRef.current = layout.map(entry => entry.pawn);
 
             // Ghost hint pawn — semi-transparent preview of where pawn will land
             if (hintPawn) {
@@ -167,7 +207,22 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
             MAP_IMAGE.addEventListener('load', draw, { once: true });
             return () => MAP_IMAGE.removeEventListener('load', draw);
         }
-    }, [pawns, hintPawn, rotation]);
+    }, [pawns, hintPawn, rotation, player.color]);
+
+    // ── Hit testing ────────────────────────────────────────────────────────────
+    // Walks pawns top-most first and returns the first one under (x, y) — in
+    // canonical canvas space — that belongs to this player and can legally move.
+    // Opponent pawns in the same stack are ignored, never "tapped".
+    const findMovablePawnAt = useCallback((ctx, x, y) => {
+        const ordered = drawOrderRef.current;
+        for (let i = ordered.length - 1; i >= 0; i--) {
+            const pawn = ordered[i];
+            if (pawn.color !== player.color || !canPawnMove(pawn, rolledNumber)) continue;
+            const area = touchableAreasRef.current[pawn._id];
+            if (area && ctx.isPointInPath(area, x, y)) return pawn;
+        }
+        return null;
+    }, [player.color, rolledNumber]);
 
     // ── Click handler ──────────────────────────────────────────────────────────
     const handleCanvasClick = useCallback(event => {
@@ -185,19 +240,15 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
         // rotation on the click point before testing.
         const { x: cursorX, y: cursorY } = rotatePoint(rawX, rawY, canvas.width / 2, canvas.height / 2, -rotation);
 
-        for (const pawn of pawns) {
-            const area = touchableAreasRef.current[pawn._id];
-            if (area && ctx.isPointInPath(area, cursorX, cursorY)) {
-                if (canPawnMove(pawn, rolledNumber)) {
-                    socket?.emit('game:move', pawn._id);
-                }
-            }
-        }
+        // One tap = at most one move, and only for one of my own pawns (the top-most
+        // under the finger when pawns are stacked).
+        const pawn = findMovablePawnAt(ctx, cursorX, cursorY);
+        if (pawn) socket?.emit('game:move', pawn._id);
 
         // Clear hint after move
         hintPawnRef.current = null;
         setHintPawn(null);
-    }, [pawns, rolledNumber, socket, rotation]);
+    }, [findMovablePawnAt, socket, rotation]);
 
     // ── Mouse move handler ─────────────────────────────────────────────────────
     // Throttled to one RAF per frame — prevents canvas redraws on every mouse pixel.
@@ -220,27 +271,17 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
             const { x, y } = rotatePoint(rawX, rawY, canvas.width / 2, canvas.height / 2, -rotation);
 
             let found = false;
-            for (const pawn of pawns) {
-                const area = touchableAreasRef.current[pawn._id];
-                if (
-                    area &&
-                    ctx.isPointInPath(area, x, y) &&
-                    player.color === pawn.color &&
-                    canPawnMove(pawn, rolledNumber)
-                ) {
-                    const pawnPosition = getPositionAfterMove(pawn, rolledNumber);
-                    if (pawnPosition) {
-                        canvas.style.cursor = 'pointer';
-                        // Only trigger re-render when the hovered pawn changes
-                        if (hintPawnRef.current?.id !== pawn._id) {
-                            const next = { id: pawn._id, position: pawnPosition, color: 'grey' };
-                            hintPawnRef.current = next;
-                            setHintPawn(next);
-                        }
-                        found = true;
-                        break;
-                    }
+            const pawn = findMovablePawnAt(ctx, x, y);
+            if (pawn) {
+                const pawnPosition = getPositionAfterMove(pawn, rolledNumber);
+                canvas.style.cursor = 'pointer';
+                // Only trigger re-render when the hovered pawn changes
+                if (hintPawnRef.current?.id !== pawn._id) {
+                    const next = { id: pawn._id, position: pawnPosition, color: 'grey' };
+                    hintPawnRef.current = next;
+                    setHintPawn(next);
                 }
+                found = true;
             }
 
             if (!found) {
@@ -251,7 +292,7 @@ const Map = ({ pawns, nowMoving, rolledNumber }) => {
                 }
             }
         });
-    }, [nowMoving, rolledNumber, pawns, player.color, rotation]);
+    }, [nowMoving, rolledNumber, findMovablePawnAt, rotation]);
 
     // Cancel any pending RAF on unmount to prevent stale-closure callbacks
     useEffect(() => {

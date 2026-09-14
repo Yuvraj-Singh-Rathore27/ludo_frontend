@@ -1,27 +1,7 @@
-const canPawnMove = (pawn, rolledNumber) => {
-    // If is in base — only a 6 exits a home token (matches backend pawnLogic.canMove)
-    if (rolledNumber === 6 && pawn.position === pawn.basePos) {
-        return true;
-        // Other situations: pawn is on map or pawn is in end positions
-    } else if (pawn.position !== pawn.basePos) {
-        switch (pawn.color) {
-            case 'red':
-                if (pawn.position + rolledNumber <= 73) return true;
-                break;
-            case 'blue':
-                if (pawn.position + rolledNumber <= 79) return true;
-                break;
-            case 'green':
-                if (pawn.position + rolledNumber <= 85) return true;
-                break;
-            case 'yellow':
-                if (pawn.position + rolledNumber <= 91) return true;
-                break;
-            default:
-                return false;
-        }
-    } else {
-        return false;
-    }
-};
+import { getDestination } from './boardPath';
+
+// Only a 6 exits a home token, overshooting the final home cell is not a move, and a
+// pawn not on its own path can never move (matches backend pawnLogic.canMove).
+const canPawnMove = (pawn, rolledNumber) => getDestination(pawn, rolledNumber) !== null;
+
 export default canPawnMove;
