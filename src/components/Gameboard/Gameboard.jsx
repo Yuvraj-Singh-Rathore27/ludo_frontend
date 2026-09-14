@@ -452,7 +452,8 @@ const Gameboard = () => {
     const [players, setPlayers] = useState([]);
 
     const [rolledNumber, setRolledNumber] = useSocketData('game:roll');
-    const [time, setTime] = useState();
+    const [time, setTime] = useState(); // absolute turn deadline, epoch ms (server clock)
+    const [secondsLeft, setSecondsLeft] = useState(null); // derived from `time` for display
     const [isReady, setIsReady] = useState();
     const [nowMoving, setNowMoving] = useState(false);
     const [started, setStarted] = useState(false);
@@ -474,6 +475,45 @@ const Gameboard = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rolledNumber]);
     useEffect(() => () => { if (pinTimeoutRef.current) clearTimeout(pinTimeoutRef.current); }, []);
+    
+    // Turn countdown. `time` is the server's absolute deadline (epoch ms, from
+    // room.nextMoveTime) — AnimatedOverlay depends on that, so it is never mutated
+    // here. We derive the seconds-left display from it instead. Recomputing against
+    // Date.now() rather than decrementing keeps the display drift-free and correct
+    // after the tab has been backgrounded (where intervals are throttled).
+    const countdownIntervalRef = useRef(null);
+    useEffect(() => {
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+        if (!nowMoving || time === undefined || time === null) {
+            setSecondsLeft(null);
+            return;
+        }
+
+        const tick = () => {
+            const remaining = Math.max(0, Math.ceil((time - Date.now()) / 1000));
+            setSecondsLeft(remaining);
+            if (remaining <= 0 && countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+            }
+        };
+
+        tick(); // paint immediately — don't wait out the first interval
+        // Sub-second polling so the displayed number flips close to the real
+        // boundary instead of lagging up to a full second behind it.
+        countdownIntervalRef.current = setInterval(tick, 250);
+
+        return () => {
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+            }
+        };
+    }, [nowMoving, time]);
+    
     const diceMover = pinnedMover || movingPlayer;
 
     const navigate = useNavigate();
@@ -672,6 +712,7 @@ const Gameboard = () => {
             if (exitIntervalRef.current) clearInterval(exitIntervalRef.current);
             if (hostDisconnectIntervalRef.current) clearInterval(hostDisconnectIntervalRef.current);
             if (cancelNavTimerRef.current) clearTimeout(cancelNavTimerRef.current);
+            if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
             notifTimeoutsRef.current.forEach(clearTimeout);
             notifTimeoutsRef.current = [];
         },
@@ -1108,13 +1149,10 @@ const Gameboard = () => {
                         {/* ── HEADER ── */}
                         <header className={styles.gameHeader}>
                             {/* ── LEFT: logo + back ── */}
+                            {/* No hamburger here — the menu belongs to the home screen's
+                                GlobalNavbar. The one that used to sit here had no onClick
+                                and did nothing when tapped. */}
                             <div className={styles.headerLeft}>
-                                <button className={styles.menuButton} type='button' aria-label='Open menu'>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </button>
-
                                 <div className={styles.brand}>
                                     <div className={styles.brandLogoWrap}>
                                         <img src={logoDice} alt='' />
@@ -1290,10 +1328,12 @@ const Gameboard = () => {
                             </section>
 
                             <section className={styles.actionDock} aria-label='Game actions'>
-                                <div className={styles.turnTimer}>
-                                    <span>Your Turn</span>
-                                    <strong>18s</strong>
-                                </div>
+                                {nowMoving && secondsLeft !== null && (
+                                    <div className={styles.turnTimer}>
+                                        <span>Your Turn</span>
+                                        <strong>{secondsLeft}s</strong>
+                                    </div>
+                                )}
                             </section>
                         </section>
 
