@@ -551,6 +551,7 @@
 
 /* ── Hamburger (hidden on desktop) ── */
 .menuButton {
+    --bar-gap: 9px;
     display: none;
     flex-direction: column;
     align-items: center;
@@ -563,6 +564,7 @@
     border-radius: var(--radius-md, 10px);
     background: rgba(8, 3, 5, 0.72);
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .menuButton span {
@@ -571,7 +573,268 @@
     height: 3px;
     border-radius: 4px;
     background: #fff;
-    transition: opacity 0.2s;
+    transition: transform 0.26s ease, opacity 0.16s ease;
+}
+
+/* hamburger → X */
+.menuButtonOpen {
+    border-color: rgba(255, 24, 58, 0.7);
+    background: rgba(255, 24, 58, 0.16);
+}
+
+.menuButtonOpen span:nth-child(1) {
+    transform: translateY(var(--bar-gap)) rotate(45deg);
+}
+
+.menuButtonOpen span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0.2);
+}
+
+.menuButtonOpen span:nth-child(3) {
+    transform: translateY(calc(var(--bar-gap) * -1)) rotate(-45deg);
+}
+
+/* ── Side drawer ── */
+.drawerBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    border: 0;
+    padding: 0;
+    background: rgba(4, 0, 2, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    animation: drawerFade 0.22s ease forwards;
+    cursor: pointer;
+}
+
+@keyframes drawerFade {
+    to { opacity: 1; }
+}
+
+.sideDrawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 301;
+    width: min(82vw, 310px);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 24, 58, 0.32);
+    background: linear-gradient(160deg, rgba(96, 6, 22, 0.96) 0%, rgba(16, 2, 7, 0.98) 45%, rgba(7, 1, 4, 0.99) 100%);
+    box-shadow: 6px 0 40px rgba(0, 0, 0, 0.6);
+    transform: translateX(-100%);
+    animation: drawerSlide 0.26s cubic-bezier(0.22, 0.8, 0.35, 1) forwards;
+}
+
+@keyframes drawerSlide {
+    to { transform: translateX(0); }
+}
+
+.drawerHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 24, 58, 0.24);
+}
+
+.drawerAvatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 181, 31, 0.45);
+    background: linear-gradient(135deg, #ff1747, #7a0518);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+}
+
+.drawerAvatar svg {
+    width: 30px;
+    height: 30px;
+    color: #fff;
+}
+
+.drawerIdentity {
+    min-width: 0;
+}
+
+.drawerIdentity strong {
+    display: block;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.drawerIdentity span {
+    display: block;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+}
+
+.drawerBalance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    margin-top: 14px;
+    padding: 11px 13px;
+    border: 1px solid rgba(255, 181, 31, 0.34);
+    border-radius: 12px;
+    background: rgba(255, 181, 31, 0.09);
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.drawerBalance small {
+    display: block;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.drawerBalance strong {
+    display: block;
+    margin-top: 3px;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--gold, #ffb51f);
+}
+
+.drawerBalanceAdd {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: rgba(255, 181, 31, 0.2);
+    color: var(--gold, #ffb51f);
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.drawerNav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 16px;
+}
+
+.drawerNav a,
+.drawerNav button {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 13px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: none;
+    color: rgba(255, 255, 255, 0.74);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+
+.drawerNav a:hover,
+.drawerNav button:hover {
+    background: rgba(255, 24, 58, 0.14);
+    color: #fff;
+}
+
+.drawerIcon {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.drawerActive {
+    background: rgba(255, 24, 58, 0.2) !important;
+    border-color: rgba(255, 24, 58, 0.5) !important;
+    color: #fff !important;
+}
+
+.drawerDisabled {
+    opacity: 0.36;
+    pointer-events: none;
+}
+
+.drawerFooter {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 24, 58, 0.24);
+}
+
+.drawerLogout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 46px;
+    border: 1px solid rgba(255, 24, 58, 0.45);
+    border-radius: 11px;
+    background: rgba(255, 24, 58, 0.12);
+    color: #ff8ca2;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+.drawerLogout:hover {
+    background: rgba(255, 24, 58, 0.24);
+    color: #fff;
+}
+
+.drawerLogout svg {
+    width: 18px;
+    height: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sideDrawer,
+    .drawerBackdrop {
+        animation-duration: 0.01ms;
+    }
+
+    .menuButton span {
+        transition: none;
+    }
 }
 
 /* ── Mobile bottom nav (hidden on desktop) ── */
@@ -725,5 +988,251 @@
         stroke-linecap: round;
         stroke-linejoin: round;
         flex-shrink: 0;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* ENHANCED MOBILE RESPONSIVENESS — Additional breakpoints */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+/* Tablet (600px - 900px) */
+@media (min-width: 600px) and (max-width: 900px) {
+    .topbar {
+        grid-template-columns: auto 1fr auto;
+        min-height: 72px;
+        padding: 0 20px;
+        gap: 16px;
+    }
+
+    .brandRow strong {
+        font-size: 24px;
+    }
+
+    .logoWrap {
+        width: 44px;
+        height: 44px;
+    }
+
+    .coinBox {
+        min-height: 48px;
+        padding: 0;
+    }
+
+    .rupeeIcon {
+        width: 40px;
+        font-size: 18px;
+    }
+
+    .coinTotal {
+        font-size: 16px;
+    }
+
+    .soundToggle {
+        width: 48px;
+        height: 48px;
+    }
+
+    .profileToggle {
+        height: 48px;
+        width: 48px;
+    }
+}
+
+/* Small phones (max-width: 480px) */
+@media (max-width: 480px) {
+    .topbar {
+        grid-template-columns: auto 1fr auto;
+        min-height: clamp(52px, 10dvh, 64px);
+        padding: 0 clamp(8px, 2vw, 14px);
+        gap: clamp(6px, 1.5vw, 10px);
+    }
+
+    .brandRow {
+        gap: clamp(6px, 1.5vw, 10px);
+    }
+
+    .brandRow strong {
+        font-size: clamp(14px, 4vw, 20px);
+    }
+
+    .logoWrap {
+        width: clamp(28px, 8vw, 36px);
+        height: clamp(28px, 8vw, 36px);
+    }
+
+    .menuButton {
+        --bar-gap: 8px;
+        width: clamp(40px, 10vw, 44px);
+        height: clamp(40px, 10vw, 44px);
+        border-radius: clamp(8px, 2vw, 10px);
+    }
+
+    .menuButton span {
+        width: clamp(18px, 5vw, 24px);
+        height: clamp(2px, 0.5vw, 2.5px);
+        margin: clamp(0.5px, 0.3vw, 1px) 0;
+    }
+
+    .coinBox {
+        min-height: clamp(36px, 8vw, 44px);
+        border-radius: clamp(8px, 2vw, 10px);
+    }
+
+    .rupeeIcon {
+        width: clamp(28px, 7vw, 34px);
+        font-size: clamp(12px, 3vw, 16px);
+    }
+
+    .coinTotal {
+        font-size: clamp(11px, 2.8vw, 14px);
+    }
+
+    .coinBlocked {
+        font-size: clamp(7px, 1.8vw, 9px);
+    }
+
+    .profileToggle {
+        height: clamp(36px, 8vw, 42px);
+        width: clamp(36px, 8vw, 42px);
+    }
+
+    .soundToggle {
+        width: clamp(36px, 8vw, 42px);
+        height: clamp(36px, 8vw, 42px);
+    }
+
+    .soundToggle svg {
+        width: clamp(14px, 3.5vw, 18px);
+        height: clamp(14px, 3.5vw, 18px);
+    }
+}
+
+/* Ultra-small phones (max-width: 360px) */
+@media (max-width: 360px) {
+    .topbar {
+        min-height: clamp(48px, 9dvh, 56px);
+        padding: 0 6px;
+        gap: 5px;
+    }
+
+    .brandRow strong {
+        font-size: 13px;
+    }
+
+    .logoWrap {
+        width: 26px;
+        height: 26px;
+    }
+
+    .menuButton {
+        --bar-gap: 7px;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+    }
+
+    .menuButton span {
+        width: 15px;
+        height: 1.5px;
+        margin: 0.5px 0;
+    }
+
+    .coinBox {
+        min-height: 34px;
+        border-radius: 6px;
+    }
+
+    .rupeeIcon {
+        width: 24px;
+        font-size: 11px;
+    }
+
+    .coinTotal {
+        font-size: 10px;
+    }
+
+    .coinBlocked {
+        font-size: 6px;
+    }
+
+    .coinBalances {
+        padding: 2px 4px;
+    }
+
+    .profileToggle {
+        height: 34px;
+        width: 34px;
+    }
+
+    .soundToggle {
+        width: 34px;
+        height: 34px;
+    }
+}
+
+/* Landscape mode (max-height: 500px) */
+@media (max-height: 500px) {
+    .topbar {
+        min-height: auto;
+        max-height: clamp(40px, 10dvh, 50px);
+        padding: clamp(6px, 0.5dvh, 8px) clamp(8px, 1.5vw, 14px);
+        gap: clamp(6px, 1vw, 10px);
+    }
+
+    .brandRow strong {
+        font-size: clamp(16px, 3.5vw, 22px);
+    }
+
+    .logoWrap {
+        width: clamp(28px, 6dvh, 36px);
+        height: clamp(28px, 6dvh, 36px);
+    }
+
+    .coinBox {
+        min-height: clamp(36px, 8dvh, 42px);
+    }
+
+    .soundToggle {
+        width: clamp(36px, 8dvh, 42px);
+        height: clamp(36px, 8dvh, 42px);
+    }
+
+    .profileToggle {
+        height: clamp(36px, 8dvh, 42px);
+        width: clamp(36px, 8dvh, 42px);
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .topbar a,
+    .topbar button {
+        min-height: 44px;
+    }
+
+    .soundToggle,
+    .profileToggle,
+    .menuButton {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .bottomNav a {
+        min-height: 56px;
+    }
+}
+
+/* High-DPI screens */
+@media (min-resolution: 192dpi) {
+    .topbar {
+        border-bottom-width: 0.5px;
+    }
+}
+
+/* Safe area for notched devices */
+@supports (padding: max(0px)) {
+    .topbar {
+        padding-left: max(clamp(14px, 2vw, 28px), env(safe-area-inset-left, 0px));
+        padding-right: max(clamp(14px, 2vw, 28px), env(safe-area-inset-right, 0px));
     }
 }

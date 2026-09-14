@@ -225,14 +225,8 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
         );
     }
 
-    const showTurnIndicator = variant === 'dock' && isCurrentPlayer && nowMoving;
-
     return (
-        <div
-            className={`${styles.container} ${variant === 'dock' ? styles.dockContainer : styles.cardContainer} ${
-                showTurnIndicator ? styles.turnIndicator : ''
-            }`}
-        >
+        <div className={`${styles.container} ${variant === 'dock' ? styles.dockContainer : styles.cardContainer}`}>
             {isCurrentPlayer ? (
                 phase !== 'idle' ? (
                     <span className={styles.resultWrap}>

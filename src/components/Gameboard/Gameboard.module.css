@@ -8,10 +8,11 @@
     --gold:   #ffb51f;
 
     position: relative;
+    width: 100%;
     height: 100vh;
     height: 100dvh;
     min-height: 0;
-    padding: clamp(4px, 0.65vw, 10px);
+    padding: 0;
     overflow: hidden;
     color: #fff;
     background:
@@ -81,21 +82,17 @@
     z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: clamp(8px, 1vw, 14px);
-    height: calc(100vh - clamp(8px, 1.3vw, 20px));
-    height: calc(100dvh - clamp(8px, 1.3vw, 20px));
+    gap: 6px;
+    height: 100dvh;
     min-height: 0;
     width: 100%;
-    max-width: none;
-    margin: 0 auto;
-    padding: clamp(12px, 1.2vw, 18px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 20px;
-    background: linear-gradient(160deg, rgba(18, 24, 40, 0.88), rgba(8, 11, 20, 0.94));
-    box-shadow:
-        0 0 0 1px rgba(255, 255, 255, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    /* backdrop-filter removed — costs 10–20 FPS on low-end Android per layer */
+    max-width: 100%;
+    margin: 0;
+    padding: 6px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .playArea {
@@ -106,7 +103,9 @@
     gap: clamp(18px, 2.8vw, 44px);
     flex: 1;
     min-height: 0;
-    padding: clamp(10px, 1.2vw, 16px) 0;
+    /* Top padding also reserves the strip .turnPrompt hangs in, above the
+       board. Shrinking it below ~28px lets the pill reach the stats bar. */
+    padding: clamp(30px, 2.4vw, 36px) 0 clamp(10px, 1.2vw, 16px);
 }
 
 .gameHeader {
@@ -176,7 +175,6 @@
     letter-spacing: 0.32em;
 }
 
-.menuButton,
 .backButton,
 .settingsButton,
 .inviteButton,
@@ -193,7 +191,6 @@
         0 12px 28px rgba(0, 0, 0, 0.24);
 }
 
-.menuButton,
 .backButton,
 .settingsButton {
     display: grid;
@@ -203,19 +200,6 @@
     padding: 0;
     border-radius: 14px;
     font-size: 31px;
-}
-
-.menuButton {
-    display: none;
-}
-
-.menuButton span {
-    display: block;
-    width: 27px;
-    height: 3px;
-    margin: 3px 0;
-    border-radius: 999px;
-    background: #d9dde5;
 }
 
 .matchStats,
@@ -296,11 +280,13 @@
 .copyBtn {
     display: inline-grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    /* Box hugs the icon — the glyph keeps its own size, this only trims the
+       chrome around it. Keep width/height ≈ icon + 4px if either changes. */
+    width: 18px;
+    height: 18px;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 5px;
+    border-radius: 4px;
     background: rgba(255, 255, 255, 0.06);
     color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
@@ -318,7 +304,6 @@
 }
 
 /* Button hover states */
-.menuButton:hover,
 .backButton:hover,
 .settingsButton:hover {
     background:
@@ -412,17 +397,24 @@
         0 26px 70px rgba(0, 0, 0, 0.5);
 }
 
+/* Sits entirely ABOVE the board, never over the artwork. `bottom: 100%` pins
+   its bottom edge to the panel's top edge regardless of how tall the pill
+   renders, so it can't creep back onto the board when the font size changes at
+   a breakpoint — which a fixed negative `top` could. The room it needs is
+   reserved by .playArea's top padding; keep the two in step if either changes. */
 .turnPrompt {
     position: absolute;
-    top: -14px;
+    bottom: calc(100% + 5px);
     left: 50%;
     z-index: 3;
-    padding: 7px 14px;
+    padding: 5px 12px;
     border: 1px solid rgba(255, 69, 75, 0.5);
     border-radius: 999px;
     background: rgba(95, 13, 18, 0.94);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
     text-transform: uppercase;
     transform: translateX(-50%);
 }
@@ -1060,10 +1052,6 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     }
 
-    .menuButton {
-        display: grid;
-    }
-
     .brand {
         min-width: 0;
         padding-right: 0;
@@ -1086,6 +1074,10 @@
     .matchStats,
     .backButton,
     .settingsButton {
+        display: none;
+    }
+
+    .inviteButton {
         display: none;
     }
 
@@ -1126,7 +1118,7 @@
     .playArea {
         grid-template-columns: minmax(0, 1fr) minmax(150px, 190px);
         gap: 8px;
-        padding-top: 8px;
+        padding-top: 32px; /* room for .turnPrompt above the board */
     }
 
     .boardGrid {
@@ -1167,25 +1159,32 @@
     }
 
     .turnTimer {
-        display: none;
-    }
-
-    .turnTimer span,
-    .turnTimer strong {
-        display: block;
-        text-transform: uppercase;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        margin-bottom: 12px;
+        background: transparent;
+        border: none;
     }
 
     .turnTimer span {
-        font-size: clamp(12px, 2.8vw, 16px);
+        display: block;
+        font-size: clamp(11px, 2.5vw, 13px);
         font-weight: 900;
+        color: rgba(255, 255, 255, 0.75);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .turnTimer strong {
-        margin-top: 3px;
+        display: block;
         color: #ff4c55;
-        font-size: clamp(38px, 8.5vw, 56px);
+        font-size: clamp(28px, 7vw, 42px);
         line-height: 1;
+        font-weight: 900;
     }
 
     .rollDock {
@@ -1253,13 +1252,9 @@
 
 @media (max-width: 620px) {
     .gameShell {
-        --mobile-pad: clamp(5px, 1.8vw, 8px);
-        --mobile-gap: clamp(5px, 1dvh, 9px);
-        --mobile-content: min(100%, clamp(326px, 94vw, 370px));
-        --mobile-board: min(calc(100vw - (var(--mobile-pad) * 4)), calc(100dvh - clamp(330px, 40dvh, 400px)), clamp(295px, 88vw, 360px));
-        width: 100vw;
-        max-width: 100vw;
-        padding: var(--mobile-pad);
+        width: 100%;
+        height: 100dvh;
+        padding: 0;
         overflow: hidden;
     }
 
@@ -1269,75 +1264,90 @@
 
     .gameFrame {
         width: 100%;
-        max-width: none;
-        height: calc(100dvh - (var(--mobile-pad) * 2));
-        min-height: 0;
-        padding: clamp(6px, 1.5vw, 10px);
-        gap: var(--mobile-gap);
-        overflow: hidden;
-        border-radius: 14px;
-        background: rgba(10, 14, 24, 0.97);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        height: 100dvh;
+        padding: 6px;
+        gap: 6px;
+        overflow: auto;
+        border-radius: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
     }
 
     .gameHeader {
-        grid-template-columns: 1fr auto 1fr;
-        gap: clamp(5px, 1.8vw, 8px);
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas: 'left center right';
+        gap: 8px;
         width: 100%;
-        min-height: clamp(36px, 6dvh, 44px);
+        min-height: 44px;
         margin: 0;
-        padding: clamp(4px, 0.8dvh, 6px) clamp(6px, 1.8vw, 10px);
-        border-bottom: 0;
+        padding: 6px 8px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
+        border-radius: 10px;
         background: rgba(7, 11, 20, 0.96);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .menuButton {
-        width: clamp(28px, 8vw, 30px);
-        height: clamp(28px, 8vw, 30px);
-        border-radius: 8px;
-        background: rgba(9, 13, 20, 0.4);
+    .headerLeft {
+        grid-area: left;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
-    .menuButton span {
-        width: 15px;
-        height: 2px;
-        margin: 1px 0;
+    /* Stays hidden here — .mobileStats below is the stats row at this width.
+       This block is evaluated after the 899px one, so re-declaring `display`
+       with anything but `none` would override that block's `display: none`
+       and render both stat rows at once. */
+    .matchStats {
+        display: none;
+    }
+
+    .headerRight {
+        grid-area: right;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     .brand {
-        gap: 6px;
+        gap: 8px;
     }
 
     .brandLogoWrap {
-        width: clamp(26px, 7.6vw, 30px);
-        height: clamp(26px, 7.6vw, 30px);
-        border-radius: 7px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
     }
 
     .brand strong {
-        font-size: clamp(14px, 4.3vw, 17px);
+        font-size: 16px;
     }
 
     .brand span {
-        margin-top: 2px;
-        font-size: 7px;
-        letter-spacing: 0.24em;
+        display: none;
+    }
+
+    .headerRight {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-left: auto;
     }
 
     .inviteButton,
     .exitButton {
-        min-height: clamp(26px, 7.4vw, 30px);
-        padding: 0 clamp(7px, 2.4vw, 10px);
-        gap: 4px;
-        border-radius: 7px;
-        font-size: clamp(8px, 2.5vw, 10px);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-            0 8px 16px rgba(0, 0, 0, 0.18);
+        min-height: 40px;
+        padding: 0 12px;
+        gap: 6px;
+        border-radius: 8px;
+        font-size: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .inviteButton {
+        display: none;
     }
 
     .inviteButton span,
@@ -1345,127 +1355,160 @@
         display: none;
     }
 
+    .exitButton {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(255, 69, 75, 0.15);
+        border: 1px solid rgba(255, 69, 75, 0.4);
+        color: #ff8585;
+    }
+
     .mobileStats {
         position: relative;
         z-index: 1;
         width: 100%;
-        min-height: clamp(34px, 6dvh, 42px);
+        min-height: 40px;
         margin: 0;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         background: rgba(8, 12, 22, 0.94);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
     }
 
     .mobileStats article {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         gap: 2px;
-        padding: 0 clamp(6px, 1.8vw, 10px);
+        padding: 0 8px;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+
+    .mobileStats article:first-child {
+        border-left: none;
     }
 
     .mobileStats span {
-        font-size: clamp(6px, 1.8vw, 7.5px);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
         letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.6);
     }
 
     .mobileStats strong {
+        font-size: 14px;
+        font-weight: 900;
+        color: #fff;
         gap: 4px;
-        font-size: clamp(9px, 2.8vw, 11px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .coinIcon {
-        width: 10px;
-        height: 10px;
-        border-width: 2px;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #ffb51f;
+        border-radius: 50%;
     }
 
     .playArea {
-        grid-template-columns: minmax(0, 1fr);
-        gap: var(--mobile-gap);
-        padding: 0;
-        margin-top: clamp(1px, 0.6dvh, 4px);
-        align-content: start;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        padding: 30px 0 0; /* top strip reserved for .turnPrompt */
+        margin: 0;
+        flex: 1;
+        min-height: 0;
     }
 
     .boardGrid {
-        width: var(--mobile-content);
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto;
-        grid-template-areas: 'board';
-        align-items: stretch;
-        justify-items: center;
-        justify-self: center;
-        gap: clamp(3px, 0.65dvh, 5px);
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
         flex: 0 1 auto;
         min-height: 0;
         padding: 0;
     }
 
     .boardPanel {
-        align-self: start;
-        width: var(--mobile-board);
-        border-radius: 16px;
-        padding: clamp(3px, 1vw, 4px);
-        border-color: rgba(255, 255, 255, 0.2);
-        background:
-            linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 32%),
-            rgba(7, 11, 18, 0.38);
-        box-shadow:
-            0 0 0 1px rgba(255, 69, 75, 0.15),
-            0 18px 44px rgba(0, 0, 0, 0.25),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(6px);
+        width: calc(100vw - 12px);
+        max-width: 360px;
+        aspect-ratio: 1;
+        border-radius: 14px;
+        padding: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 32%), rgba(8, 12, 20, 0.92);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
     }
 
     .canvas {
-        border-radius: 11px;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        display: block;
     }
 
     .actionDock {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-areas: 'roll';
-        width: var(--mobile-content);
-        justify-self: center;
-        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         gap: 0;
+        margin: 0;
         padding: 0;
-        border: 0;
+        border: none;
         background: transparent;
-        transform: none;
     }
 
     .rollDock {
-        grid-template-columns: clamp(48px, 15vw, 62px) minmax(0, 1fr) minmax(70px, 27vw, 100px);
-        justify-items: start;
+        width: calc(100vw - 12px);
+        max-width: 360px;
+        display: grid;
+        grid-template-columns: 50px 1fr 80px;
         align-items: center;
-        gap: clamp(6px, 2vw, 10px);
-        max-width: none;
-        min-height: clamp(52px, 9dvh, 68px);
-        padding: clamp(5px, 1dvh, 8px) clamp(8px, 2.5vw, 12px);
-        border: 1px solid rgba(255, 69, 75, 0.55);
-        border-radius: 14px;
-        background:
-            radial-gradient(ellipse at 10% 80%, rgba(255, 69, 75, 0.2), transparent 30%),
-            rgba(10, 13, 22, 0.94);
-        box-shadow:
-            0 16px 36px rgba(0, 0, 0, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        gap: 8px;
+        padding: 8px;
+        min-height: 60px;
+        border: 1px solid rgba(255, 69, 75, 0.5);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 69, 75, 0.15), transparent 40%), rgba(12, 15, 24, 0.96);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
     }
 
     .rollDock > div:last-child {
-        min-width: 0;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        text-align: left;
+        display: none;
     }
 
     .rollDock strong {
-        font-size: clamp(11px, 3.6vw, 14px);
+        font-size: 13px;
+        font-weight: 900;
+        color: #fff;
+        text-transform: uppercase;
     }
 
     .rollDock span {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
         margin-top: 2px;
-        font-size: clamp(6.5px, 2.1vw, 8.5px);
+        display: none;
     }
 
     .rollDock::after {
@@ -1473,62 +1516,87 @@
         display: grid;
         place-items: center;
         width: 100%;
-        min-height: clamp(32px, 5.6dvh, 42px);
+        min-height: 50px;
         border-radius: 10px;
         background: linear-gradient(160deg, #e01828, #8c0812);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.28),
-            0 0 22px rgba(255, 32, 44, 0.42),
-            0 8px 18px rgba(0, 0, 0, 0.28);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 16px rgba(255, 32, 44, 0.3);
         color: #fff;
-        font-size: clamp(11px, 3.2vw, 13px);
+        font-size: 12px;
         font-weight: 1000;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        transition: filter 0.15s;
+        cursor: pointer;
+        transition: filter 0.2s;
     }
 
-    .rollDock::after:hover {
-        filter: brightness(1.15);
+    .rollDock::after:active {
+        filter: brightness(0.95);
     }
 
     .sideAction,
-    .turnTimer,
     .chatDock {
         display: none;
     }
 
-    .statusFooter {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+    .turnTimer {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
         width: 100%;
-        min-height: clamp(26px, 4.5dvh, 32px);
-        margin: auto 0 0;
+        padding: 8px 6px;
+        background: transparent;
+        border: none;
+        margin-bottom: 6px;
+    }
+
+    .turnTimer span {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.75);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .turnTimer strong {
+        display: block;
+        color: #ff4c55;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 900;
+    }
+
+    .statusFooter {
+        width: calc(100vw - 12px);
+        max-width: 360px;
+        grid-template-columns: repeat(5, 1fr);
+        min-height: 32px;
         border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(7, 11, 20, 0.96);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(8, 12, 22, 0.94);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
     }
 
     .statusFooter span {
         flex-direction: column;
         gap: 2px;
-        padding: 2px 3px;
-        font-size: clamp(5px, 1.5vw, 6px);
-        white-space: normal;
+        padding: 2px 4px;
+        font-size: 8px;
         text-align: center;
-        line-height: 1.05;
+        line-height: 1.1;
+        white-space: nowrap;
     }
 
     .statusFooter span svg {
-        width: 9px;
-        height: 9px;
-        flex-shrink: 0;
-        opacity: 0.9;
+        width: 10px;
+        height: 10px;
     }
 
     .copyBtn {
-        width: 18px;
-        height: 18px;
+        width: 14px;
+        height: 14px;
         border-radius: 4px;
     }
 
@@ -1622,11 +1690,6 @@
         padding: 3px 7px;
     }
 
-    .menuButton {
-        width: 28px;
-        height: 28px;
-    }
-
     .brand img {
         width: 26px;
         height: 26px;
@@ -1644,6 +1707,19 @@
     .exitButton {
         min-height: 26px;
         padding: 0 8px;
+    }
+
+    .inviteButton {
+        display: none;
+    }
+
+    .exitButton {
+        width: 32px;
+        height: 26px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .mobileStats {
@@ -1703,5 +1779,631 @@
 
     .statusFooter span {
         font-size: 5.5px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* ULTRA-SMALL PHONES (320px - 380px) — Extra-compact layout */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 320px) {
+    .gameShell {
+        --mobile-pad: 2px;
+        --mobile-gap: 3px;
+        --mobile-content: min(100%, 300px);
+        --mobile-board: min(calc(100vw - 30px), calc(100dvh - 340px), 280px);
+    }
+
+    .gameFrame {
+        padding: 6px;
+        gap: 3px;
+        border-radius: 12px;
+    }
+
+    .gameHeader {
+        min-height: 32px;
+        padding: 2px 5px;
+        gap: 4px;
+    }
+
+    .brand {
+        gap: 5px;
+    }
+
+    .brandLogoWrap {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+
+    .brand strong {
+        font-size: 13px;
+    }
+
+    .brand span {
+        font-size: 5px;
+        letter-spacing: 0.2em;
+        margin-top: 1px;
+    }
+
+    .inviteButton,
+    .exitButton {
+        min-height: 24px;
+        padding: 0 6px;
+        font-size: 7px;
+        border-radius: 6px;
+    }
+
+    .inviteButton {
+        display: none;
+    }
+
+    .exitButton {
+        width: 28px;
+        height: 24px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobileStats {
+        min-height: 28px;
+        border-radius: 8px;
+    }
+
+    .mobileStats article {
+        padding: 0 4px;
+        gap: 1px;
+    }
+
+    .mobileStats span {
+        font-size: 5px;
+        letter-spacing: 0.02em;
+    }
+
+    .mobileStats strong {
+        font-size: 8px;
+        gap: 2px;
+    }
+
+    .playArea {
+        gap: 3px;
+        margin-top: 3px;
+    }
+
+    .boardGrid {
+        gap: 2px;
+    }
+
+    .boardPanel {
+        border-radius: 11px;
+        padding: 2px;
+    }
+
+    .canvas {
+        border-radius: 9px;
+    }
+
+    .rollDock {
+        grid-template-columns: 44px minmax(0, 1fr) 60px;
+        min-height: 48px;
+        gap: 5px;
+        padding: 3px 6px;
+        border-radius: 9px;
+    }
+
+    .rollDock strong {
+        font-size: 10px;
+    }
+
+    .rollDock span {
+        font-size: 6px;
+    }
+
+    .rollDock::after {
+        min-height: 27px;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+    }
+
+    .statusFooter {
+        min-height: 22px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0;
+        border-radius: 8px;
+    }
+
+    .statusFooter span {
+        font-size: 5px;
+        padding: 1px 2px;
+    }
+
+    .statusFooter span svg {
+        width: 8px;
+        height: 8px;
+    }
+
+    .copyBtn {
+        width: 12px;
+        height: 12px;
+    }
+
+    .copyBtn svg {
+        width: 8px;
+        height: 8px;
+    }
+
+    .playerBadge {
+        width: clamp(80px, 28vw, 140px);
+        gap: clamp(2px, 0.8vw, 4px);
+        padding: 1px;
+        border-radius: 12px;
+        --corner-offset: clamp(-12px, -2vw, -4px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* LANDSCAPE ORIENTATION — Compact vertical spacing */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (max-width: 900px) {
+    .gameShell {
+        padding: 3px;
+    }
+
+    .gameFrame {
+        padding: 6px;
+        gap: 5px;
+        height: calc(100dvh - 6px);
+    }
+
+    .gameHeader {
+        min-height: auto;
+        max-height: 40px;
+        padding: 3px 4px;
+        gap: 6px;
+    }
+
+    .brand strong {
+        font-size: clamp(16px, 3.5vw, 24px);
+    }
+
+    .brand span {
+        font-size: clamp(8px, 2vw, 12px);
+        margin-top: 1px;
+    }
+
+    .mobileStats {
+        min-height: 32px;
+    }
+
+    .mobileStats span {
+        font-size: clamp(8px, 1.5vw, 11px);
+    }
+
+    .mobileStats strong {
+        font-size: clamp(12px, 2.5vw, 16px);
+    }
+
+    .playArea {
+        gap: 4px;
+        /* Short landscape screens: still enough for the pill, which is only
+           23px tall, without eating the little height these screens have. */
+        padding-top: 28px;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .boardGrid {
+        gap: 4px 8px;
+    }
+
+    .rollDock {
+        min-height: 90px;
+        padding: 8px 10px;
+    }
+
+    .rollDock strong {
+        font-size: clamp(11px, 2vw, 16px);
+    }
+
+    .rollDock span {
+        font-size: clamp(8px, 1.5vw, 11px);
+    }
+
+    .rollDock::after {
+        min-height: 24px;
+        font-size: clamp(8px, 1.5vw, 11px);
+    }
+
+    .statusFooter {
+        min-height: 28px;
+    }
+
+    .statusFooter span {
+        font-size: clamp(6px, 1vw, 8px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* DESKTOP (900px+) — Full layout with side panels */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 900px) {
+    .gameShell {
+        padding: 8px;
+    }
+
+    .gameFrame {
+        padding: 12px;
+        gap: 12px;
+        height: calc(100dvh - 16px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        background: linear-gradient(160deg, rgba(18, 24, 40, 0.88), rgba(8, 11, 20, 0.94));
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .playArea {
+        display: grid;
+        grid-template-columns: max-content minmax(230px, 280px);
+        justify-content: center;
+        align-items: center;
+        gap: clamp(18px, 2.8vw, 44px);
+        flex: 1;
+        min-height: 0;
+        /* Must keep the .turnPrompt strip — this block is evaluated after the
+           base rule, so a plain `padding` shorthand here would drop it. */
+        padding: clamp(30px, 2.4vw, 36px) 0 clamp(10px, 1.2vw, 16px);
+    }
+
+    .boardGrid {
+        display: grid;
+        grid-template-columns: minmax(210px, 260px) minmax(390px, min(42vw, 63vh, 520px));
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        gap: clamp(10px, 1.25vw, 16px) clamp(22px, 2.8vw, 34px);
+        width: auto;
+        max-width: none;
+    }
+
+    .boardPanel {
+        width: 100%;
+        border-radius: 22px;
+        padding: clamp(5px, 0.7vw, 10px);
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .actionDock {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        place-items: center;
+        gap: 0;
+        width: 100%;
+        min-height: auto;
+        margin: 0;
+        padding: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        background: rgba(4, 7, 11, 0.90);
+    }
+
+    .rollDock {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: center;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        max-width: 270px;
+        min-height: 184px;
+        padding: 18px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 18px;
+        background: radial-gradient(circle at 24% 94%, rgba(255, 69, 75, 0.25), transparent 38%), rgba(9, 13, 20, 0.92);
+        box-shadow: 0 22px 54px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .rollDock > div:last-child {
+        display: block;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        text-align: center;
+    }
+
+    .rollDock strong {
+        font-size: clamp(20px, 1.5vw, 26px);
+    }
+
+    .rollDock span {
+        display: block;
+        margin-top: 7px;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 14px;
+    }
+
+    .rollDock::after {
+        content: '';
+        display: none;
+    }
+
+    .statusFooter {
+        width: 100%;
+        max-width: 100%;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        min-height: 52px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(7, 11, 18, 0.92);
+    }
+
+    .statusFooter span {
+        flex-direction: row;
+        gap: 6px;
+        padding: 0 10px;
+        font-size: 14px;
+        text-align: left;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .statusFooter span:first-child {
+        border-left: 0;
+    }
+
+    .statusFooter span svg {
+        width: auto;
+        height: auto;
+        opacity: 1;
+    }
+
+    /* Desktop shows .matchStats inside the header; this row stays hidden.
+       It previously re-declared the full .matchStats styling here, which
+       overrode the base `display: none` and rendered both stat rows at once. */
+    .mobileStats {
+        display: none;
+    }
+
+    .coinIcon {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #ff9d0d;
+        border-radius: 50%;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* TABLET (600px - 900px) */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 600px) and (max-width: 899px) {
+    .gameShell {
+        padding: clamp(8px, 1.5vw, 12px);
+    }
+
+    .gameFrame {
+        padding: clamp(12px, 2vw, 18px);
+        gap: clamp(10px, 1.5vw, 16px);
+        border-radius: 18px;
+    }
+
+    .gameHeader {
+        min-height: 56px;
+        gap: clamp(12px, 2vw, 18px);
+        padding: 0 4px clamp(8px, 1vw, 12px);
+    }
+
+    .brand strong {
+        font-size: clamp(24px, 4vw, 32px);
+    }
+
+    .brand span {
+        font-size: clamp(12px, 2vw, 16px);
+    }
+
+    .playArea {
+        gap: clamp(12px, 2.5vw, 28px);
+    }
+
+    .boardGrid {
+        grid-template-columns: minmax(160px, 200px) minmax(350px, min(45vw, 56vh, 460px));
+        gap: clamp(12px, 2vw, 20px);
+    }
+
+    .rollDock {
+        min-height: 140px;
+        max-width: 240px;
+    }
+
+    .mobileStats {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(88px, 0.8fr) minmax(110px, 0.9fr);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* FOLDABLE DEVICES & SPLIT VIEW (500px - 600px) */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 500px) and (max-width: 620px) {
+    .gameShell {
+        padding: clamp(6px, 1.2vw, 10px);
+    }
+
+    .gameFrame {
+        padding: clamp(10px, 1.5vw, 16px);
+        gap: clamp(8px, 1.2vw, 12px);
+    }
+
+    .gameHeader {
+        min-height: 50px;
+        gap: clamp(10px, 1.8vw, 16px);
+    }
+
+    .brand strong {
+        font-size: clamp(20px, 4vw, 28px);
+    }
+
+    .brand span {
+        font-size: clamp(11px, 2vw, 14px);
+    }
+
+    .boardGrid {
+        grid-template-columns: minmax(150px, 180px) minmax(320px, min(50vw, 55vh, 420px));
+    }
+
+    .rollDock {
+        grid-template-columns: clamp(48px, 12vw, 58px) minmax(0, 1fr) minmax(70px, 25vw);
+        min-height: 56px;
+    }
+
+    .mobileStats article {
+        padding: 0 clamp(8px, 2vw, 16px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* ULTRA-WIDE SCREENS (2000px+) — Larger elements */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 2000px) {
+    .gameFrame {
+        max-width: 1600px;
+        padding: clamp(20px, 2vw, 32px);
+        gap: clamp(20px, 2vw, 32px);
+    }
+
+    .gameHeader {
+        min-height: 96px;
+        gap: clamp(24px, 3vw, 40px);
+    }
+
+    .brand strong {
+        font-size: clamp(48px, 4vw, 56px);
+    }
+
+    .brand span {
+        font-size: clamp(24px, 2vw, 32px);
+    }
+
+    .boardGrid {
+        grid-template-columns: minmax(280px, 350px) minmax(500px, min(45vw, 65vh, 700px));
+        gap: clamp(28px, 3vw, 48px);
+    }
+
+    .rollDock {
+        min-height: 240px;
+        max-width: 320px;
+        padding: clamp(24px, 2vw, 32px);
+        gap: clamp(16px, 2vw, 24px);
+    }
+
+    .rollDock strong {
+        font-size: clamp(32px, 2.5vw, 48px);
+    }
+
+    .matchStats strong {
+        font-size: 28px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* SAFE AREA SUPPORT — Notched devices */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@supports (padding: max(0px)) {
+    .gameShell {
+        padding: 
+            max(clamp(4px, 0.65vw, 10px), env(safe-area-inset-top, 4px))
+            max(clamp(4px, 0.65vw, 10px), env(safe-area-inset-right, 4px))
+            max(clamp(4px, 0.65vw, 10px), env(safe-area-inset-bottom, 4px))
+            max(clamp(4px, 0.65vw, 10px), env(safe-area-inset-left, 4px));
+    }
+
+    .gameFrame {
+        border-radius: env(safe-area-inset-top, 20px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* TOUCH DEVICE OPTIMIZATIONS */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase button touch targets to 44px minimum */
+        .backButton,
+    .settingsButton,
+    .inviteButton,
+    .exitButton {
+        min-height: max(44px, clamp(32px, 8vw, 48px));
+        min-width: max(44px, clamp(32px, 8vw, 48px));
+    }
+
+    .rollDock::after {
+        min-height: max(48px, clamp(36px, 10dvh, 56px));
+    }
+
+    /* Reduce button hover effects on touch */
+    button {
+        transition: background 0.25s ease;
+    }
+
+    /* Improve clickable area for badges */
+    .playerBadge {
+        min-height: 48px;
+        padding: clamp(4px, 1vw, 8px);
+    }
+
+    /* Touch-friendly status footer */
+    .statusFooter span {
+        min-height: 44px;
+        padding: 0 clamp(8px, 2vw, 12px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* KEYBOARD VISIBLE ADJUSTMENTS (Virtual keyboard on mobile) */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (max-height: 600px) and (max-width: 768px) {
+    .gameFrame {
+        height: calc(100dvh - clamp(8px, 1.3vw, 20px));
+    }
+
+    .playArea {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .boardGrid {
+        gap: clamp(6px, 1vw, 12px);
+    }
+
+    .statusFooter {
+        min-height: 28px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* HIGH DPI SCREENS (Retina, AMOLED) */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (min-resolution: 192dpi) {
+    .gameFrame,
+    .boardPanel,
+    .rollDock,
+    .actionDock,
+    .statusFooter {
+        border-width: 0.5px;
+    }
+
+    .canvas {
+        image-rendering: high-quality;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* LOW DPI SCREENS — Crisp text rendering */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (max-resolution: 96dpi) {
+    body {
+        -webkit-font-smoothing: subpixel-antialiased;
+        text-rendering: optimizeSpeed;
     }
 }
