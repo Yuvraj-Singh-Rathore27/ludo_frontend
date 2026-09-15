@@ -514,7 +514,25 @@ const Gameboard = () => {
         };
     }, [nowMoving, time]);
     
-    const diceMover = pinnedMover || movingPlayer;
+    // The pin can outlive the turn it was set for: if the turn comes back to this
+    // player while the previous roller's pin is still running (e.g. the opponent had
+    // no legal move), the roll button would render in the opponent's corner and the
+    // player's tap on their own corner would miss — the "needs a second tap" report.
+    // So once it is this player's turn to roll, the dice always sits with them.
+    const awaitingMyRoll = nowMoving && (rolledNumber === null || rolledNumber === undefined);
+    const diceMover = awaitingMyRoll ? movingPlayer : pinnedMover || movingPlayer;
+    // …and drop that stale pin as soon as this player's roll is awaited. Otherwise the
+    // instant this player's own result arrives (awaitingMyRoll flips false) the dice
+    // would jump back to the old pinned corner for a frame and remount — which looked
+    // like the first roll after a reconnect "didn't register".
+    useEffect(() => {
+        if (!awaitingMyRoll) return;
+        if (pinTimeoutRef.current) {
+            clearTimeout(pinTimeoutRef.current);
+            pinTimeoutRef.current = null;
+        }
+        setPinnedMover(null);
+    }, [awaitingMyRoll]);
 
     const navigate = useNavigate();
 
@@ -545,6 +563,8 @@ const Gameboard = () => {
 
     // Exit overlay — shown after clicking EXIT; hides when winner declared or player reconnects
     const [showExitOverlay, setShowExitOverlay] = useState(false);
+    // "Leave match?" confirmation shown before Exit does anything during a live match
+    const [confirmExit, setConfirmExit] = useState(false);
     const [exitSecondsLeft, setExitSecondsLeft] = useState(EXIT_SECONDS);
     const exitIntervalRef = useRef(null);
     const cancelNavTimerRef = useRef(null);
@@ -1209,13 +1229,12 @@ const Gameboard = () => {
                                         onClick={() => {
                                             const token = localStorage.getItem('ludo_token');
                                             if (gameStarted) {
-                                                // Game is live — show 60s reconnect overlay instead of
-                                                // navigating immediately. The overlay gives the player a
-                                                // chance to change their mind; "Leave Match (Forfeit)"
-                                                // inside the overlay handles the permanent exit path.
-                                                if (roomSocket?.connected) roomSocket.emit('player:exit');
-                                                setShowExitOverlay(true);
-                                                return; // do NOT navigate — overlay takes over
+                                                // Game is live — ask first. Exit sits where players tap
+                                                // reflexively, and confirming starts the 60s forfeit
+                                                // countdown (see confirmLeaveMatch), so a mis-tap must
+                                                // never start it on its own.
+                                                setConfirmExit(true);
+                                                return; // do NOT navigate — confirmation takes over
                                             }
                                             // Pre-game (WAITING/READY): clean up the room slot via REST
                                             // then navigate. Fire-and-forget; server cleans up after.
@@ -1538,6 +1557,77 @@ const Gameboard = () => {
                 </div>
             )}
 
+            {/* ── Exit confirmation — nothing happens to the match until the player confirms ── */}
+            {confirmExit && gameStarted && !winner && !showExitOverlay && (
+                <Overlay handleOverlayClose={() => setConfirmExit(false)}>
+                    <div
+                        role='alertdialog'
+                        aria-labelledby='leave-match-title'
+                        aria-describedby='leave-match-desc'
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 14,
+                            textAlign: 'center',
+                            padding: '28px 20px 20px',
+                            maxWidth: 340,
+                            borderRadius: 14,
+                            background: 'rgba(20, 8, 12, 0.96)',
+                            border: '1px solid rgba(255,160,40,0.35)',
+                        }}
+                    >
+                        <h2 id='leave-match-title' style={{ margin: 0, color: '#ffa028', fontSize: 21, fontWeight: 800 }}>
+                            Leave this match?
+                        </h2>
+                        <p id='leave-match-desc' style={{ margin: 0, color: 'rgba(255,255,255,0.7)', fontSize: 14, lineHeight: 1.5 }}>
+                            You'll have {EXIT_SECONDS} seconds to reconnect. After that you forfeit the match
+                            {totalPool ? ` and your entry into the ₹${totalPool} prize pool` : ''}.
+                        </p>
+                        <button
+                            type='button'
+                            autoFocus
+                            onClick={() => setConfirmExit(false)}
+                            style={{
+                                width: '100%',
+                                padding: '14px 0',
+                                borderRadius: 8,
+                                border: '1px solid rgba(76,255,136,0.5)',
+                                background: 'rgba(76,255,136,0.18)',
+                                color: '#4cff88',
+                                fontSize: 15,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Stay in Match
+                        </button>
+                        <button
+                            type='button'
+                            onClick={() => {
+                                setConfirmExit(false);
+                                // Same as the old one-tap Exit: starts the server's 60s window
+                                if (roomSocket?.connected) roomSocket.emit('player:exit');
+                                setShowExitOverlay(true);
+                            }}
+                            style={{
+                                width: '100%',
+                                padding: '12px 0',
+                                borderRadius: 8,
+                                border: '1px solid rgba(255,24,58,0.4)',
+                                background: 'rgba(255,24,58,0.1)',
+                                color: '#ff4d6a',
+                                fontSize: 14,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Leave Match
+                        </button>
+                    </div>
+                </Overlay>
+            )}
+
             {/* ── Exit overlay — shown after EXIT; player can reconnect within 60s ── */}
             {showExitOverlay && !winner && (
                 <Overlay>
@@ -1610,6 +1700,16 @@ const Gameboard = () => {
                                         playerName: authUser.displayName || authUser.id,
                                     });
                                 }
+                                // Pull the live board from the game server too: turns kept
+                                // advancing while the overlay was up, so the dice/turn state
+                                // on screen is stale. Without this the board looked restored
+                                // but the Roll Dice control could belong to a turn that had
+                                // already passed. (Buffered by socket.io if it is mid-reconnect.)
+                                socket?.emit('room:data', {
+                                    roomId: context.roomId,
+                                    userId: authUser?.id,
+                                    color: context?.color,
+                                });
                             }}
                             style={{
                                 width: '100%',

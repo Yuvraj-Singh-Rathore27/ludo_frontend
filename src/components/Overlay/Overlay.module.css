@@ -10,7 +10,10 @@
     padding: 16px;
     background-color: rgba(23, 3, 8, 0.72);
     backdrop-filter: blur(8px);
-    z-index: 20;
+    /* Above every other game-screen layer — toasts and reconnect banners sit at 50 and
+       pop up exactly during exit/reconnect, so a dialog below them could have its
+       buttons covered for a moment and swallow the first tap. */
+    z-index: 1000;
 }
 
 .dialog {

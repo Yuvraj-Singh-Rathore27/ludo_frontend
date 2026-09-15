@@ -11,4 +11,17 @@ import roll  from '../images/dice/roll.png';
 
 const diceImages = [one, two, three, four, five, six, roll];
 
+// Preload + decode every face ONCE when the module loads. The 3D dice cube is
+// mounted fresh for each roll, so without this the browser re-requests and
+// re-decodes all faces right as the spin starts — a visible stutter on low-end
+// phones. Holding the decoded Image objects keeps them in the in-memory image
+// cache, so each new <img> with the same src renders instantly.
+export const PRELOADED_DICE_IMAGES = diceImages.map(src => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    if (typeof img.decode === 'function') img.decode().catch(() => {});
+    return img;
+});
+
 export default diceImages;

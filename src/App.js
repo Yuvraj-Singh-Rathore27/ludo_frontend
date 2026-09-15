@@ -46,9 +46,18 @@ const AppRoutes = () => {
 
         setPlayerSocket(socket);
 
+        // This effect creates exactly one game socket per login (no StrictMode
+        // double-invoke; cleanup disconnects it). socket.io fires 'connect' again on
+        // every automatic reconnect of that same socket, so label the two cases —
+        // otherwise a reconnect reads like a duplicate connection in the console.
+        let connectedBefore = false;
         socket.on('connect', () => {
-            console.log('Socket Connected');
+            console.log(connectedBefore ? 'Socket Reconnected' : 'Socket Connected');
+            connectedBefore = true;
             setLoading(false);
+        });
+        socket.on('disconnect', reason => {
+            console.log('Socket Disconnected:', reason);
         });
 
         socket.on('player:data', data => {

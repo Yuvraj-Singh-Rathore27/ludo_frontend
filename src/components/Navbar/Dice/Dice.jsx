@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState, useCallback } from 'react';
-import { SocketContext } from '../../../App';
+import { PlayerDataContext, SocketContext } from '../../../App';
 import images from '../../../constants/diceImages';
 import diceSound from '../../../images/dice/dice.mp3';
 import styles from './Dice.module.css';
@@ -18,6 +18,16 @@ const FACE_LANDING_ROTATION = {
 };
 
 const SAFETY_TIMEOUT_MS = 6000;
+
+// One roll sound for the whole app. The dice component is mounted afresh in
+// whichever player's corner holds the dice, so a per-instance Audio re-requested
+// dice.mp3 on nearly every turn. Created on first use (browsers only allow audio
+// after a user gesture anyway) and reused from then on.
+let sharedDiceAudio = null;
+const getDiceAudio = () => {
+    if (!sharedDiceAudio) sharedDiceAudio = new Audio(diceSound);
+    return sharedDiceAudio;
+};
 
 // Builds the cube's final transform: a few extra full turns (so the motion
 // keeps going, never reverses) ending exactly on the rolled face.
@@ -71,6 +81,7 @@ const DiceCube = ({ phase, landTransform }) => (
 // robust regardless of how fast the server responds or passes the turn.
 const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'card', labelSide = 'below' }) => {
     const socket = useContext(SocketContext);
+    const roomId = useContext(PlayerDataContext)?.roomId;
     // 'idle' | 'spinning' | 'landing' | 'landed' | 'noMove'
     const [phase, setPhase] = useState('idle');
     const phaseRef = useRef('idle');
@@ -89,8 +100,15 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
     // Mirrors the live prop for the delayed post-landing check.
     const hasRolledNumberRef = useRef(false);
 
-    const audioRef = useRef(null);
     const timersRef = useRef([]); // every pending timeout for the CURRENT roll
+
+    // Brief "Reconnecting…" label when a tap arrives while the game socket is down
+    const [offlineHint, setOfflineHint] = useState(false);
+    useEffect(() => {
+        if (!offlineHint) return undefined;
+        const id = setTimeout(() => setOfflineHint(false), 1500);
+        return () => clearTimeout(id);
+    }, [offlineHint]);
 
     const setPhaseSafe = useCallback(next => {
         phaseRef.current = next;
@@ -127,11 +145,24 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
         // so a rapid double-tap can never start a second roll.
         if (phaseRef.current !== 'idle') return;
 
-        if (!audioRef.current) {
-            audioRef.current = new Audio(diceSound);
+        // Mid-reconnect the emit would be buffered and could fire long after the tap,
+        // while the dice sat spinning and blocked further taps. Say so and stay ready.
+        if (socket && socket.connected === false) {
+            setOfflineHint(true);
+            return;
         }
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
+
+        // Sound must never be able to stop the roll: play() returns undefined instead of
+        // a promise on some older mobile browsers, and `.catch` on that used to throw
+        // before game:roll was ever emitted — a tap that silently did nothing.
+        try {
+            const audio = getDiceAudio();
+            audio.currentTime = 0;
+            const playing = audio.play();
+            if (playing && typeof playing.catch === 'function') playing.catch(() => {});
+        } catch {
+            /* audio unavailable — roll anyway */
+        }
 
         spinStartRef.current = Date.now();
         // Optimistic visual only — the actual sequence (and its safety net)
@@ -147,8 +178,10 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
 
         // Existing game logic — untouched. The server generates the real result;
         // this component only ever displays whatever number it sends back.
-        socket?.emit('game:roll');
-    }, [socket, setPhaseSafe, after, resetToIdle]);
+        // The room code rides along so the roll still lands after a reconnect that
+        // lost the server-side session (the server verifies the seat either way).
+        socket?.emit('game:roll', roomId);
+    }, [socket, roomId, setPhaseSafe, after, resetToIdle]);
 
     const isCurrentPlayer = movingPlayer === playerColor;
     const hasRolledNumber = rolledNumber !== null && rolledNumber !== undefined;
@@ -209,6 +242,18 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
         }
     }, [hasRolledNumber, resetToIdle]);
 
+    // The server refused this roll (stale turn state, already rolled, …). Drop the
+    // optimistic spin right away instead of waiting out the 6s safety timeout, so the
+    // player's next tap works. Only a click-started spin with no result yet is reset.
+    useEffect(() => {
+        if (typeof socket?.on !== 'function') return undefined;
+        const onRejected = () => {
+            if (phaseRef.current === 'spinning' && !scheduledRef.current) resetToIdle();
+        };
+        socket.on('game:roll_rejected', onRejected);
+        return () => socket.off('game:roll_rejected', onRejected);
+    }, [socket, resetToIdle]);
+
     // Cleanup all timers on unmount
     useEffect(() => clearTimers, [clearTimers]);
 
@@ -263,7 +308,7 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
                         >
                             <img src={images[6]} alt='roll' />
                         </button>
-                        <span className={styles.rollLabel}>Roll Dice</span>
+                        <span className={styles.rollLabel}>{offlineHint ? 'Reconnecting…' : 'Roll Dice'}</span>
                     </span>
                 ) : null
             ) : null}

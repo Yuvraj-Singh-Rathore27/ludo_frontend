@@ -428,6 +428,10 @@
     background: rgba(11, 13, 17, 0.5);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     touch-action: manipulation;
+    /* Own compositor layer: the board repaints every frame while a pawn hops, and
+       without this a software-rendered canvas (common on budget Android) drags the
+       board panel's large blurred box-shadow into every one of those repaints. */
+    will-change: transform;
 }
 
 /* Compact per-player profile badge — sits right on the board's own border at
