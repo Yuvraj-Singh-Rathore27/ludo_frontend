@@ -11,7 +11,7 @@ import Dice from '../Navbar/Dice/Dice';
 import Overlay from '../Overlay/Overlay';
 import styles from './Gameboard.module.css';
 import trophyImage from '../../images/trophy.webp';
-import logoDice from '../../images/pages/ludi-profile.png';
+import logoDice from '../../images/pages/ludi-profile.webp';
 import homeSound from '../../images/dice/dice.mp3';
 import { getLocalPerspective } from './perspective';
 import { MAX_ROLL_ANIMATION_MS } from '../Navbar/Dice/diceTiming';
@@ -442,6 +442,19 @@ const WaitingRoom = React.memo(({
 });
 
 const EXIT_SECONDS = 60;
+
+// Content equality for room:data payloads (a handful of small objects), used to
+// keep the previous state reference when a message changed nothing.
+const sameJson = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+const samePawns = (a, b) =>
+    a.length === b.length &&
+    a.every(
+        (pawn, i) =>
+            pawn._id === b[i]._id &&
+            pawn.position === b[i].position &&
+            pawn.color === b[i].color &&
+            pawn.basePos === b[i].basePos
+    );
 
 const Gameboard = () => {
     const socket = useContext(SocketContext); // port 8081 — old MongoDB game server
@@ -1039,11 +1052,16 @@ const Gameboard = () => {
             );
             if (currentPlayer) setIsReady(currentPlayer.ready);
             setRolledNumber(data.rolledNumber);
-            setPlayers(data.players);
+            // Every room:data parses into brand-new arrays, even when nothing in them
+            // changed (a dice roll, a timer resync). Keeping the previous array when
+            // the content is identical lets React skip re-rendering the player panels
+            // and the memoised board, which otherwise rebuilt its hit areas and
+            // repainted on every message.
+            setPlayers(prev => (sameJson(prev, data.players) ? prev : data.players));
             // Guard: only set pawns when the array is valid — a null/short array
             // keeps the current state rather than breaking the board render
             if (Array.isArray(data.pawns) && data.pawns.length === 16) {
-                setPawns(data.pawns);
+                setPawns(prev => (samePawns(prev, data.pawns) ? prev : data.pawns));
             }
             setTime(data.nextMoveTime);
             setStarted(data.started);
@@ -1111,18 +1129,32 @@ const Gameboard = () => {
         setPlayerData,
     ]);
 
-    // Re-request game state when the MongoDB socket reconnects mid-game
+    // Re-request game state whenever this screen may have fallen behind the server:
+    // the socket reconnects, the tab/app comes back to the foreground (mobile
+    // browsers suspend background tabs and drop broadcasts meanwhile), or the
+    // device regains network. Otherwise a stale board — e.g. a pawn missing —
+    // stays on screen until the next roll or move happens to replace it.
     useEffect(() => {
         if (!socket || !context?.roomId) return;
-        const onReconnect = () => {
+        const requestRoomData = () => {
+            if (!socket.connected) return; // 'connect' fires once it is back
             socket.emit('room:data', {
                 roomId: context.roomId,
                 userId: authUser?.id,
                 color: context?.color,
             });
         };
-        socket.on('connect', onReconnect);
-        return () => socket.off('connect', onReconnect);
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') requestRoomData();
+        };
+        socket.on('connect', requestRoomData);
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        window.addEventListener('online', requestRoomData);
+        return () => {
+            socket.off('connect', requestRoomData);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            window.removeEventListener('online', requestRoomData);
+        };
     }, [socket, context?.roomId, authUser?.id, context?.color]);
 
     // Retry room:data every 4s while gameStarted=true but board hasn't rendered yet

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link }          from 'react-router-dom';
 import { useAuth }                    from '../../../context/AuthContext';
 import styles                         from './AuthLoginScreen.module.css';
-import logoDice                       from '../../../images/pages/ludi-profile.png';
+import logoDice                       from '../../../images/pages/ludi-profile.webp';
 
 /* ─── country list ─────────────────────────────────────── */
 const COUNTRIES = [

@@ -39,6 +39,15 @@ const AppRoutes = () => {
 
         const socket = io(`http://${window.location.hostname}:8081`, {
             withCredentials: true,
+            // WebSocket first, polling only as a fallback (same as the room socket
+            // below). The default starts on HTTP long-polling and upgrades later, so
+            // every early game event paid extra HTTP round trips — each one also
+            // loading and re-saving the session on the server — which is the
+            // slowest possible path on a slow or flaky mobile connection.
+            transports: ['websocket', 'polling'],
+            // Without this the client never falls back to polling when WebSocket is
+            // blocked (some mobile carriers / proxies) and just keeps failing.
+            tryAllTransports: true,
             // Send the JWT so the game server can verify identity (spectator
             // prevention); function form picks up the latest token on reconnect.
             auth: cb => cb({ token: localStorage.getItem('ludo_token') }),
@@ -103,6 +112,9 @@ const AppRoutes = () => {
         const rs = io(`http://${window.location.hostname}:8080`, {
             withCredentials: true,
             transports: ['websocket', 'polling'],
+            // Without this the client never falls back to polling when WebSocket is
+            // blocked (some mobile carriers / proxies) and just keeps failing.
+            tryAllTransports: true,
             // Use function form so each reconnect attempt picks up the latest token
             auth: cb => cb({ token: localStorage.getItem('ludo_token') }),
         });

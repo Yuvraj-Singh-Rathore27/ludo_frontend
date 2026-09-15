@@ -776,7 +776,7 @@
     position: fixed;
     inset: 0;
     z-index: -2;
-    background-image: url('../../../images/pages/login-ludo.png');
+    background-image: url('../../../images/pages/login-ludo.webp');
     background-position: center;
     background-size: cover;
     opacity: 0.2;
@@ -812,7 +812,7 @@
         z-index: 0;
         background:
             linear-gradient(90deg, rgba(5, 0, 3, 0.18), rgba(9, 0, 5, 0.24) 58%, rgba(8, 0, 4, 0.72)),
-            url('../../../images/pages/login-ludo.png') center / cover no-repeat;
+            url('../../../images/pages/login-ludo.webp') center / cover no-repeat;
         filter: saturate(1.15) contrast(1.02);
     }
 
@@ -1052,7 +1052,7 @@
     }
 
     .page::before {
-        background-image: url('../../../images/pages/login-ludo-3.png');
+        background-image: url('../../../images/pages/login-ludo-3.webp');
         background-position: center top;
         opacity: 0.24;
     }

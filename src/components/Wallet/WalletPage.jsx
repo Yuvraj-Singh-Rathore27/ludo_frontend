@@ -3,8 +3,8 @@ import { useNavigate }         from 'react-router-dom';
 import { useWallet }           from '../../context/WalletContext';
 import GlobalNavbar            from '../GlobalNavbar/GlobalNavbar';
 import styles                  from './WalletPage.module.css';
-import logoDice                from '../../images/pages/ludi-profile.png';
-import heroBoard               from '../../images/pages/login-ludo-hero-clean.png';
+import logoDice                from '../../images/pages/ludi-profile.webp';
+import heroBoard               from '../../images/pages/login-ludo-hero-clean.webp';
 
 /* ─── Icons ─────────────────────────────────────────────── */
 const ArrowDown  = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><path d='M12 5v14M5 12l7 7 7-7'/></svg>;

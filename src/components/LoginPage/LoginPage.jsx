@@ -5,14 +5,14 @@ import JoinServer from './JoinServer/JoinServer';
 import GlobalNavbar from '../GlobalNavbar/GlobalNavbar';
 import { SetPlayerDataContext } from '../../App';
 import { useAuth } from '../../context/AuthContext';
-import heroBoard from '../../images/pages/login-ludo-hero-clean.png';
-import heroBoardMobile from '../../images/pages/login-ludo-3.png';
-import bgImage from '../../images/pages/bg-1.png';
+import heroBoard from '../../images/pages/login-ludo-hero-clean.webp';
+import heroBoardMobile from '../../images/pages/login-ludo-3.webp';
+import bgImage from '../../images/pages/bg-1.webp';
 import diceImg from '../../images/dice/6.png';
-import redPawn from '../../images/pawns/red-pawn.png';
-import bluePawn from '../../images/pawns/blue-pawn.png';
-import greenPawn from '../../images/pawns/green-pawn.png';
-import yellowPawn from '../../images/pawns/yellow-pawn.png';
+import redPawn from '../../images/pawns/login/red-pawn.webp';
+import bluePawn from '../../images/pawns/login/blue-pawn.webp';
+import greenPawn from '../../images/pawns/login/green-pawn.webp';
+import yellowPawn from '../../images/pawns/login/yellow-pawn.webp';
 import styles from './LoginPage.module.css';
 
 const Icon = ({ type, className }) => {

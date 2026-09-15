@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { useAudioSettings } from '../../context/AudioContext';
-import logoDice from '../../images/pages/ludi-profile.png';
+import logoDice from '../../images/pages/ludi-profile.webp';
 import styles from './GlobalNavbar.module.css';
 
 const getInitials = user => {

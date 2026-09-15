@@ -15,6 +15,8 @@ import styles from '../Gameboard.module.css';
 
 const SAFE_POSITIONS = [16, 24, 29, 37, 42, 50, 55, 63];
 const BOARD_SIZE = 460;
+// Minimum gap between board resync requests triggered by an illegal pawn payload.
+const RESYNC_THROTTLE_MS = 2000;
 
 // Auto-move waits for the dice's own spin -> land -> hold sequence to fully
 // finish (same fixed timing the dice component uses, plus a small buffer) so
@@ -252,6 +254,23 @@ const buildStackSlots = (pawns, rotation) => {
 
 const BADGE_OFFSET = 12;
 
+// ─── Tap / hover target size ──────────────────────────────────────────────────
+// The old fixed 12 board-px radius shrank with the board: on a ~350 px phone
+// board a tap had to land within ~9 screen px of a pawn's centre, so ordinary
+// thumb taps silently missed and the game felt frozen. The radius is now sized
+// in screen pixels (a ~44 px touch target, the usual mobile guideline) and
+// converted to board pixels, capped so a tap on empty board never grabs a pawn
+// far away. Only the player's own movable pawns are ever candidates, and the
+// nearest one wins, so the bigger target cannot pick the wrong token.
+const TOUCH_TARGET_RADIUS_CSS = 22;
+const MIN_HIT_RADIUS = 12;
+const MAX_HIT_RADIUS = 28;
+
+const hitRadiusFor = (rect, canvas) => {
+    const boardPxPerCssPx = rect.width ? canvas.width / rect.width : 1;
+    return Math.min(MAX_HIT_RADIUS, Math.max(MIN_HIT_RADIUS, TOUCH_TARGET_RADIUS_CSS * boardPxPerCssPx));
+};
+
 const drawStackBadge = (ctx, x, y, count, rotation) => {
     ctx.save();
     ctx.translate(x, y);
@@ -277,20 +296,30 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
 
     // Never draw, animate or hit-test a pawn on a cell outside its own colour's
     // path (e.g. a blue pawn in red's home column). The server repairs such boards
-    // on load and resyncs clients, so this only guards against a bad payload.
-    const pawns = useMemo(
-        () =>
-            boardPawns.filter(pawn => {
-                if (isValidPawnPosition(pawn)) return true;
-                console.error('[BOARD_INTEGRITY] skipping illegal pawn', pawn);
-                return false;
-            }),
-        [boardPawns]
-    );
+    // on load, so this only guards against a bad or stale payload.
+    const { pawns, skippedPawns } = useMemo(() => {
+        const valid = [];
+        const skipped = [];
+        boardPawns.forEach(pawn => (isValidPawnPosition(pawn) ? valid : skipped).push(pawn));
+        return { pawns: valid, skippedPawns: skipped };
+    }, [boardPawns]);
+
+    // A skipped pawn used to stay invisible until some unrelated update (the next
+    // roll or move) happened to replace the board. Ask the server for the
+    // authoritative board straight away instead — it repairs illegal pawns before
+    // sending — throttled so a persistently bad payload can't spam requests.
+    const lastResyncRef = useRef(0);
+    useEffect(() => {
+        if (!skippedPawns.length) return;
+        console.error('[BOARD_INTEGRITY] skipping illegal pawns, requesting resync', skippedPawns);
+        const now = Date.now();
+        if (!socket || !player.roomId || now - lastResyncRef.current < RESYNC_THROTTLE_MS) return;
+        lastResyncRef.current = now;
+        socket.emit('room:data', { roomId: player.roomId, color: player.color });
+    }, [skippedPawns, socket, player.roomId, player.color]);
 
     const canvasRef = useRef(null);
     const ctxRef = useRef(null); // cached 2d context — not re-fetched on every event
-    const touchableAreasRef = useRef({}); // Path2D map keyed by pawn._id — never mutates props
     const touchableCentersRef = useRef({}); // pawn._id -> hit-area centre, for nearest-match picking
     const rafRef = useRef(null); // pending RAF handle for mousemove throttle
     const hintPawnRef = useRef(null); // mirrors hintPawn state without triggering renders
@@ -478,53 +507,48 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
 
         prevPositionsRef.current = next;
 
-        // Hit areas follow the same fan-out the painter uses, so each token in a
-        // stack gets its own target instead of all of them sharing one blob at
-        // the cell centre. Centres are kept alongside for nearest-match picking.
-        const areas = {};
+        // Hit targets follow the same fan-out the painter uses, so each token in a
+        // stack gets its own centre instead of all of them sharing the cell centre.
         const centers = {};
         const { slots } = buildStackSlots(pawns, rotation);
         pawns.forEach(pawn => {
             const slot = slots[pawn._id] || SINGLE_SLOT;
             const { x, y } = positionMapCoords[pawn.position];
-            const cx = x + slot.dx;
-            const cy = y + slot.dy;
-            const area = new Path2D();
-            area.arc(cx, cy, slot.count > 1 ? 9 : 12, 0, 2 * Math.PI);
-            areas[pawn._id] = area;
-            centers[pawn._id] = { x: cx, y: cy };
+            centers[pawn._id] = { x: x + slot.dx, y: y + slot.dy };
         });
-        touchableAreasRef.current = areas;
         touchableCentersRef.current = centers;
 
         scheduleFrame();
     }, [pawns, rotation, scheduleFrame]);
 
     // Repaint for non-movement reasons (hover hint, perspective change), and
-    // once more when the artwork finishes decoding on first load.
+    // once more whenever a piece of artwork finishes decoding on first load.
+    // paint() draws nothing until the board AND every pawn image are ready, but
+    // only the board image used to trigger a repaint — so when the pawns finished
+    // loading after it (the usual case on a slow connection) the board stayed
+    // blank until some unrelated game update happened to arrive.
     useEffect(() => {
         scheduleFrame();
-        if (MAP_IMAGE.complete) return undefined;
+        const pending = [MAP_IMAGE, ...Object.values(PAWN_IMAGES)].filter(img => !img.complete);
+        if (!pending.length) return undefined;
         const onLoad = () => scheduleFrame();
-        MAP_IMAGE.addEventListener('load', onLoad, { once: true });
-        return () => MAP_IMAGE.removeEventListener('load', onLoad);
+        pending.forEach(img => img.addEventListener('load', onLoad, { once: true }));
+        return () => pending.forEach(img => img.removeEventListener('load', onLoad));
     }, [hintPawn, rotation, scheduleFrame]);
 
-    // Which token sits under a canonical-space point. Fanned-out tokens can still
-    // have slightly overlapping hit areas, so the nearest centre wins. Hover and
-    // click both go through this, which is what guarantees the token you see
-    // previewed is the token that actually moves.
+    // Which token a canonical-space point is aimed at: the nearest accepted token
+    // whose centre is within `radius`. Hover and click both go through this, which
+    // is what guarantees the token you see previewed is the token that moves.
     const pawnAtPoint = useCallback(
-        (ctx, x, y, accept) => {
+        (x, y, accept, radius) => {
             let best = null;
-            let bestDistance = Infinity;
+            let bestDistance = radius * radius;
             for (const pawn of pawns) {
                 if (accept && !accept(pawn)) continue;
-                const area = touchableAreasRef.current[pawn._id];
-                if (!area || !ctx.isPointInPath(area, x, y)) continue;
                 const center = touchableCentersRef.current[pawn._id];
-                const distance = center ? (x - center.x) ** 2 + (y - center.y) ** 2 : 0;
-                if (distance < bestDistance) {
+                if (!center) continue;
+                const distance = (x - center.x) ** 2 + (y - center.y) ** 2;
+                if (distance <= bestDistance) {
                     bestDistance = distance;
                     best = pawn;
                 }
@@ -557,15 +581,19 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             // candidates, so an opponent token sitting nearer the tap on a mixed
             // stack can never swallow the click.
             const target = pawnAtPoint(
-                ctx,
                 cursorX,
                 cursorY,
-                pawn => pawn.color === player.color && canPawnMove(pawn, rolledNumber)
+                pawn => pawn.color === player.color && canPawnMove(pawn, rolledNumber),
+                hitRadiusFor(rect, canvas)
             );
-            if (target) {
+            // Offline, socket.io would buffer the move and send it whenever the
+            // connection returns — possibly a stale move long after the tap. Skip it
+            // instead (like the dice does); the player can tap again once reconnected,
+            // and the server's turn timer still moves for them if they can't.
+            if (target && socket?.connected) {
                 // Room code rides along so the move still lands after a reconnect that
                 // lost the server-side session (the server verifies the seat either way).
-                socket?.emit('game:move', target._id, player.roomId);
+                socket.emit('game:move', target._id, player.roomId);
             }
 
             // Clear hint after move
@@ -598,10 +626,10 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
 
                 let found = false;
                 const hovered = pawnAtPoint(
-                    ctx,
                     x,
                     y,
-                    pawn => player.color === pawn.color && canPawnMove(pawn, rolledNumber)
+                    pawn => player.color === pawn.color && canPawnMove(pawn, rolledNumber),
+                    hitRadiusFor(rect, canvas)
                 );
                 if (hovered) {
                     const pawnPosition = getPositionAfterMove(hovered, rolledNumber);
@@ -628,6 +656,24 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
         },
         [nowMoving, rolledNumber, pawnAtPoint, player.color, rotation]
     );
+
+    // The hint was only ever cleared by a click or by hovering off a pawn. A move
+    // that happens without a click (auto-move, the server's timeout move) left the
+    // ghost stuck on the board, and once the turn passed the mouse-move handler
+    // bails out early, so nothing cleared it until this player's next turn. It is
+    // only valid for the current board, roll and turn, so drop it when any changes.
+    useEffect(() => {
+        if (hintPawnRef.current === null) return;
+        hintPawnRef.current = null;
+        setHintPawn(null);
+        if (canvasRef.current) canvasRef.current.style.cursor = 'default';
+    }, [pawns, nowMoving, rolledNumber]);
+
+    const handleMouseLeave = useCallback(() => {
+        if (hintPawnRef.current === null) return;
+        hintPawnRef.current = null;
+        setHintPawn(null);
+    }, []);
 
     // Cancel any pending frames on unmount to prevent stale-closure callbacks
     useEffect(() => {
@@ -666,7 +712,13 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
         const pawnId = myMovablePawns[0]._id;
         autoMoveTimerRef.current = setTimeout(() => {
             autoMoveTimerRef.current = null;
-            socket?.emit('game:move', pawnId, player.roomId);
+            // Same as a tap: never queue a move while offline. Allow a retry for this
+            // roll once the board updates; otherwise the server's turn timer moves.
+            if (!socket?.connected) {
+                autoMovedForRef.current = null;
+                return;
+            }
+            socket.emit('game:move', pawnId, player.roomId);
         }, AUTO_MOVE_DELAY_MS);
     }, [pawns, rolledNumber, nowMoving, player.color, player.roomId, socket]);
 
@@ -685,6 +737,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             ref={canvasRef}
             onClick={handleCanvasClick}
             onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             style={rotation ? { transform: `rotate(${rotation}deg)` } : undefined}
         />
     );
