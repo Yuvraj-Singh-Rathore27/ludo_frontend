@@ -235,6 +235,25 @@
     cursor: pointer;
 }
 
+/* Spins only while a manual refresh is loading — the automatic background refresh
+   stays silent, so the list never looks busy on its own. */
+.spinning {
+    animation: refreshSpin 0.7s linear infinite;
+}
+
+@keyframes refreshSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinning {
+        animation: none;
+        opacity: 0.6;
+    }
+}
+
 @media (max-width: 767px) {
     .serversTableContainer {
         min-height: min(258px, calc(100dvh - 430px));

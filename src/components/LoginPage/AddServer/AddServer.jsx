@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { SetPlayerDataContext } from '../../../App';
 import WindowLayout from '../WindowLayout/WindowLayout';
+import { copyText, randomId } from '../../../utils/browser';
 import styles from './AddServer.module.css';
 
 const WhatsAppIcon = () => (
@@ -41,7 +42,8 @@ const AddServer = () => {
             );
             const { roomId, roomCode } = createRes.data?.data;
 
-            const idempotencyKey = crypto.randomUUID();
+            // randomId, not crypto.randomUUID — that one is missing on plain http too.
+            const idempotencyKey = randomId();
             const joinRes = await axios.post(
                 '/api/v1/rooms/join',
                 { roomId, idempotencyKey },
@@ -61,11 +63,14 @@ const AddServer = () => {
         }
     };
 
-    const handleCopy = () => {
-        navigator.clipboard.writeText(createdRoom.roomCode).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
+    const handleCopy = async () => {
+        // copyText falls back to execCommand: production is served over plain http,
+        // where navigator.clipboard does not exist and this threw a runtime error.
+        const ok = await copyText(createdRoom.roomCode);
+        // On the rare browser where neither path works, say so on the button instead of
+        // silently doing nothing — the code is on screen and can be copied by hand.
+        setCopied(ok ? 'copied' : 'failed');
+        setTimeout(() => setCopied(false), 2500);
     };
 
     const handleWhatsApp = () => {
@@ -90,7 +95,7 @@ const AddServer = () => {
                         <div className={styles.codeBox}>
                             <span className={styles.codeLetters}>{createdRoom.roomCode}</span>
                             <button type='button' className={styles.copyBtn} onClick={handleCopy}>
-                                {copied ? '✓ Copied' : 'Copy'}
+                                {copied === 'copied' ? '✓ Copied' : copied === 'failed' ? 'Copy manually' : 'Copy'}
                             </button>
                         </div>
 

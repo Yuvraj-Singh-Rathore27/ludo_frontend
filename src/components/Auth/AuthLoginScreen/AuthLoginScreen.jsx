@@ -576,7 +576,7 @@ const AuthLoginScreen = () => {
                     )}
 
                     {/* ── OTP FLOW (phone + OTP boxes) ── */}
-                    {!verifyStep && forgotStep === 'off' && method === 'otp' &&
+                    {!verifyStep && forgotStep === 'off' && method === 'otp' && (
                     <div className={styles.fieldWrap}>
                         <div className={`${styles.phoneRow} ${touched && localErr ? styles.phoneRowErr : ''} ${step === 'otp' ? styles.phoneRowLocked : ''}`}>
                             <CountryPicker value={country} onChange={handleCountryChange} disabled={step === 'otp'} />
@@ -597,7 +597,8 @@ const AuthLoginScreen = () => {
                             </svg>
                         </div>
                         {touched && localErr && <span className={styles.fieldErr}>{localErr}</span>}
-                    </div>}
+                    </div>
+                    )}
 
                     {/* ── OTP BOX ── */}
                     {!verifyStep && forgotStep === 'off' && method === 'otp' && step === 'otp' && (

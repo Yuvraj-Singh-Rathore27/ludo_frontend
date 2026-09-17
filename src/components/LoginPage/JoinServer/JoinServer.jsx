@@ -1,19 +1,31 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useContext } from 'react';
 import axios from 'axios';
-import { SetPlayerDataContext } from '../../../App';
+import { RoomSocketContext, SetPlayerDataContext } from '../../../App';
 import { useAuth } from '../../../context/AuthContext';
 import refresh from '../../../images/login-page/refresh.png';
 import WindowLayout from '../WindowLayout/WindowLayout';
 import ServersTable from './ServersTable/ServersTable';
 import withLoading from '../../HOC/withLoading';
+// randomId, not crypto.randomUUID — that one only exists on https/localhost, so it was
+// undefined on the plain-http production site.
+import { randomId } from '../../../utils/browser';
 import styles from './JoinServer.module.css';
 
 const ServersTableWithLoading = withLoading(ServersTable);
 
 const TABS = ['public', 'pools', 'code'];
 
+// The lobby updates when something actually changes: the server pushes 'lobby:changed'
+// the moment a room is created, filled, left, cancelled or started, and the list
+// reloads then — no fixed polling loop. A slow safety refresh only covers the case
+// where a push is missed (socket down / reconnecting), and it pauses while the tab is
+// hidden. Several changes in a row are coalesced into one reload.
+const SAFETY_REFRESH_MS = 60000;
+const PUSH_DEBOUNCE_MS = 350;
+
 const JoinServer = ({ onRoomsRefreshed }) => {
     const setPlayerData = useContext(SetPlayerDataContext);
+    const roomSocket = useContext(RoomSocketContext); // Fastify socket — pushes lobby changes
     const { authUser } = useAuth();
     const [tab, setTab] = useState('public');
 
@@ -23,21 +35,34 @@ const JoinServer = ({ onRoomsRefreshed }) => {
     const [joiningId, setJoiningId] = useState(null);
     const [roomError, setRoomError] = useState('');
 
-    const fetchRooms = async () => {
+    // `quiet` is used by the background refresh: it must not flip the table back to its
+    // loading state (the list would flicker while the player is reading it) and must not
+    // replace a visible error with a new one on a single failed poll.
+    const roomsInFlight = useRef(false);
+    const fetchRooms = useCallback(async ({ quiet = false } = {}) => {
         const token = localStorage.getItem('ludo_token');
         if (!token) { setIsLoading(false); return; }
-        setIsLoading(true);
-        setRoomError('');
+        if (roomsInFlight.current) return; // never stack requests
+        roomsInFlight.current = true;
+        if (!quiet) {
+            setIsLoading(true);
+            setRoomError('');
+        }
         try {
             const res = await axios.get('/api/v1/rooms/', {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setRooms(res.data?.data || []);
-        } catch { setRoomError('Failed to load rooms'); }
-        finally { setIsLoading(false); }
-    };
+            setRoomError('');
+        } catch {
+            if (!quiet) setRoomError('Failed to load rooms');
+        } finally {
+            roomsInFlight.current = false;
+            if (!quiet) setIsLoading(false);
+        }
+    }, []);
 
-    useEffect(() => { fetchRooms(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { fetchRooms(); }, [fetchRooms]);
 
     const handleJoinClick = async room => {
         if (joiningId) return;
@@ -46,7 +71,7 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         setJoiningId(room.roomId);
         setRoomError('');
         try {
-            const idempotencyKey = crypto.randomUUID();
+            const idempotencyKey = randomId();
             const joinRes = await axios.post(
                 '/api/v1/rooms/join',
                 { roomId: room.roomId, idempotencyKey },
@@ -80,23 +105,80 @@ const JoinServer = ({ onRoomsRefreshed }) => {
     const [joiningPoolId, setJoiningPoolId] = useState(null);
     const [poolError, setPoolError]   = useState('');
 
-    const fetchPools = async () => {
+    const poolsInFlight = useRef(false);
+    const fetchPools = useCallback(async ({ quiet = false } = {}) => {
         const token = localStorage.getItem('ludo_token');
         if (!token) return;
-        setPoolsLoading(true);
-        setPoolError('');
+        if (poolsInFlight.current) return;
+        poolsInFlight.current = true;
+        if (!quiet) {
+            setPoolsLoading(true);
+            setPoolError('');
+        }
         try {
             const res = await axios.get('/api/v1/pools/', {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setPools(res.data?.data || []);
-        } catch { setPoolError('Failed to load pools'); }
-        finally { setPoolsLoading(false); }
-    };
+            setPoolError('');
+        } catch {
+            if (!quiet) setPoolError('Failed to load pools');
+        } finally {
+            poolsInFlight.current = false;
+            if (!quiet) setPoolsLoading(false);
+        }
+    }, []);
 
+    // First open of the Pools tab loads it; the live effect below keeps it current.
     useEffect(() => {
         if (tab === 'pools' && pools.length === 0) fetchPools();
-    }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, fetchPools]);
+
+    /* ── Live lobby ───────────────────────────────────────────────────── */
+    // Reload the open list whenever the server says it changed. Reloading (rather than
+    // patching the list from the event) keeps one source of truth — the same endpoint
+    // the manual refresh uses — so the list can never drift out of sync.
+    const pushTimerRef = useRef(null);
+    useEffect(() => {
+        if (tab !== 'public' && tab !== 'pools') return undefined;
+
+        const reload = () => (tab === 'public' ? fetchRooms({ quiet: true }) : fetchPools({ quiet: true }));
+        const reloadIfVisible = () => {
+            if (document.visibilityState === 'visible') reload();
+        };
+
+        // A burst of changes (several players joining at once) triggers one reload.
+        const onLobbyChanged = () => {
+            if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
+            pushTimerRef.current = setTimeout(() => {
+                pushTimerRef.current = null;
+                reloadIfVisible();
+            }, PUSH_DEBOUNCE_MS);
+        };
+
+        // Subscribe to the lobby channel, and re-subscribe after any socket reconnect.
+        const subscribe = () => roomSocket?.emit('lobby:join');
+        subscribe();
+        roomSocket?.on('connect', subscribe);
+        roomSocket?.on('lobby:changed', onLobbyChanged);
+
+        // Safety net only — covers a push missed while the socket was down.
+        const safetyId = setInterval(reloadIfVisible, SAFETY_REFRESH_MS);
+        // Returning to the lobby (tab switch / app resumed) shows fresh rooms at once.
+        document.addEventListener('visibilitychange', reloadIfVisible);
+        window.addEventListener('focus', reloadIfVisible);
+
+        return () => {
+            if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
+            clearInterval(safetyId);
+            roomSocket?.off('connect', subscribe);
+            roomSocket?.off('lobby:changed', onLobbyChanged);
+            roomSocket?.emit('lobby:leave');
+            document.removeEventListener('visibilitychange', reloadIfVisible);
+            window.removeEventListener('focus', reloadIfVisible);
+        };
+    }, [tab, roomSocket, fetchRooms, fetchPools]);
 
     const handleJoinPool = async pool => {
         if (joiningPoolId) return;
@@ -105,7 +187,7 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         setJoiningPoolId(pool.id);
         setPoolError('');
         try {
-            const idempotencyKey = crypto.randomUUID();
+            const idempotencyKey = randomId();
             const res = await axios.post(
                 `/api/v1/pools/${pool.id}/join`,
                 { idempotencyKey },
@@ -134,7 +216,7 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         setJoiningByCode(true);
         setCodeError('');
         try {
-            const idempotencyKey = crypto.randomUUID();
+            const idempotencyKey = randomId();
             const res = await axios.post(
                 '/api/v1/rooms/join-by-code',
                 { roomCode: code, idempotencyKey },
@@ -152,9 +234,17 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         <WindowLayout
             title='Join A Server'
             titleComponent={
-                tab === 'public' && (
+                // The list keeps itself up to date; this stays for an on-demand refresh
+                // and spins while a request is in flight so a tap visibly does something.
+                (tab === 'public' || tab === 'pools') && (
                     <div className={styles.refresh}>
-                        <img src={refresh} alt='refresh' onClick={fetchRooms} />
+                        <img
+                            src={refresh}
+                            alt='Refresh list'
+                            title='Refresh now'
+                            className={tab === 'public' ? (isLoading ? styles.spinning : '') : poolsLoading ? styles.spinning : ''}
+                            onClick={() => (tab === 'public' ? fetchRooms() : fetchPools())}
+                        />
                     </div>
                 )
             }
