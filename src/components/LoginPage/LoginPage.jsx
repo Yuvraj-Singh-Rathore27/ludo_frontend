@@ -142,7 +142,17 @@ const Icon = ({ type, className }) => {
 
 const LoginPage = () => {
     const [mobileTab, setMobileTab] = useState('join');
-    const [stats, setStats] = useState({ activeRooms: null, playersOnline: null });
+    // Both "Quick Match" entry points below jump here — the Join panel's own tab
+    // (see JoinServer.jsx) already opens on Quick Match by default.
+    const joinPanelRef = useRef(null);
+    const goToQuickMatch = () => {
+        setMobileTab('join');
+        joinPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    // publicMatchEnabled defaults to false (matches the backend's own default — see
+    // PUBLIC_MATCH_ENABLED) so there is no flash of Public Match UI before this first
+    // /api/v1/stats response arrives.
+    const [stats, setStats] = useState({ activeRooms: null, playersOnline: null, publicMatchEnabled: false });
     const [activeRoom, setActiveRoom] = useState(null);
     const dismissedRef = useRef(false); // true after user clicks Dismiss — stops re-showing
     const setPlayerData = useContext(SetPlayerDataContext);
@@ -238,7 +248,7 @@ const LoginPage = () => {
                         Join a live Ludo board or host your own table with smooth turns, private rooms, and fast classic matches.
                     </p>
                     <div className={styles.heroCta}>
-                        <button type='button' className={styles.heroBtn}>
+                        <button type='button' className={styles.heroBtn} onClick={goToQuickMatch}>
                             <Icon type='bolt' className={styles.heroBtnIcon} />
                             Quick Match
                         </button>
@@ -354,7 +364,7 @@ const LoginPage = () => {
             )}
 
             {/* ── MOBILE QUICK-MATCH (hidden on desktop) ── */}
-            <button className={styles.quickMatch} type='button'>
+            <button className={styles.quickMatch} type='button' onClick={goToQuickMatch}>
                 <Icon type='bolt' className={styles.quickMatchSvgIcon} />
                 Quick Match
             </button>
@@ -381,11 +391,11 @@ const LoginPage = () => {
 
             {/* ── JOIN / HOST PANELS ── */}
             <section className={`${styles.panelGrid} ${styles[`show${mobileTab}`]}`}>
-                <div className={styles.joinPanel}>
-                    <JoinServer onRoomsRefreshed={fetchStats} />
+                <div className={styles.joinPanel} ref={joinPanelRef}>
+                    <JoinServer onRoomsRefreshed={fetchStats} publicMatchEnabled={stats.publicMatchEnabled} />
                 </div>
                 <div className={styles.hostPanel}>
-                    <AddServer />
+                    <AddServer publicMatchEnabled={stats.publicMatchEnabled} />
                 </div>
             </section>
 

@@ -110,6 +110,183 @@
     font-weight: 700;
 }
 
+.poolGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.poolCardClickable {
+    cursor: pointer;
+}
+
+.poolOpenLink {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ff5a72;
+    white-space: nowrap;
+}
+
+.poolDetailHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 24, 58, 0.2);
+    border-radius: 10px;
+    background: rgba(8, 2, 6, 0.45);
+}
+
+.poolDetailTitle {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.poolBack {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    background: transparent;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.poolBack:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.poolStats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.poolStat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.poolStatValue {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.poolStatLabel {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.45);
+    text-align: center;
+}
+
+.poolMatchList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 14px;
+}
+
+.poolMatchRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.poolMatchLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+
+.poolMatchName {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.poolMatchId {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.poolMatchCount {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.poolMatchState {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.poolStateWAITING {
+    color: #7cc7ff;
+    border-color: rgba(124, 199, 255, 0.35);
+}
+
+.poolStateFILLING {
+    color: #ffc857;
+    border-color: rgba(255, 200, 87, 0.4);
+}
+
+.poolStateFULL {
+    color: #ff6b81;
+    border-color: rgba(255, 107, 129, 0.4);
+}
+
+.poolMatchBtn {
+    flex-shrink: 0;
+    padding: 5px 14px;
+    border: 1px solid rgba(255, 24, 58, 0.6);
+    border-radius: 6px;
+    background: transparent;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.poolMatchBtn:hover:not(:disabled) {
+    background: rgba(255, 24, 58, 0.25);
+}
+
+.poolMatchBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .poolJoinBtn {
     flex-shrink: 0;
     padding: 7px 18px;

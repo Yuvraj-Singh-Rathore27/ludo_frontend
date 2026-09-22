@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { SetPlayerDataContext } from '../../../App';
 import WindowLayout from '../WindowLayout/WindowLayout';
@@ -11,23 +11,76 @@ const WhatsAppIcon = () => (
     </svg>
 );
 
-const AddServer = () => {
+// Public Match is a disabled-by-default legacy feature (see backend PUBLIC_MATCH_ENABLED —
+// its implementation is kept, just hidden from players). publicMatchEnabled comes from
+// the backend (via LoginPage's /api/v1/stats poll), never hard-coded here.
+const AddServer = ({ publicMatchEnabled = false }) => {
     const setPlayerData = useContext(SetPlayerDataContext);
     const [entryFee, setEntryFee] = useState('');
     const [maxPlayers, setMaxPlayers] = useState(2);
-    const [isPrivate, setIsPrivate] = useState(false);
+    // Private Room is the only room type left to host while Public Match is disabled —
+    // start there, and don't offer the toggle at all in that case (see the room-type
+    // buttons below). The backend enforces this too (see room.controller.createRoom),
+    // this is only about what a player is even offered to click.
+    const [isPrivate, setIsPrivate] = useState(!publicMatchEnabled);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [createdRoom, setCreatedRoom] = useState(null);
     const [copied, setCopied] = useState(false);
 
+    // Private Room entry fee: the admin-approved list, not free text. Reuses the same
+    // /api/v1/pools/ endpoint Quick Match already fetches — one source of truth, no
+    // duplicate "entry fee" API. The backend still re-validates this id on submit
+    // (see room.controller.createRoom) — this list is only what the player can tap,
+    // never something the client is trusted to invent an amount for.
+    const [feeRows, setFeeRows] = useState(null); // null = still loading
+    const [feesError, setFeesError] = useState('');
+    const [selectedFeeId, setSelectedFeeId] = useState('');
+
+    useEffect(() => {
+        if (!isPrivate) return;
+        let alive = true;
+        axios.get('/api/v1/pools/')
+            .then(res => { if (alive) setFeeRows(res.data?.data || []); })
+            .catch(() => { if (alive) setFeesError('Could not load entry fees'); });
+        return () => { alive = false; };
+    }, [isPrivate]);
+
+    // One button per distinct amount — two pools can share an amount (e.g. a "Gold"
+    // and a "Silver" pool both at ₹10); which specific pool backs the button doesn't
+    // matter here, since a Private Room never joins a Quick Match pool.
+    const feeOptions = useMemo(() => {
+        if (!feeRows) return [];
+        const seen = new Map();
+        for (const p of feeRows) if (!seen.has(p.entryFee)) seen.set(p.entryFee, p.id);
+        return [...seen.entries()]
+            .map(([amount, id]) => ({ amount, id }))
+            .sort((a, b) => Number(a.amount) - Number(b.amount));
+    }, [feeRows]);
+
+    // If the admin's fee list changes while one is already selected, drop a
+    // now-invalid selection rather than silently submitting a stale id.
+    useEffect(() => {
+        if (selectedFeeId && !feeOptions.some(f => f.id === selectedFeeId)) setSelectedFeeId('');
+    }, [feeOptions, selectedFeeId]);
+
     const handleSubmit = async e => {
         e.preventDefault();
+
+        // Public Match keeps its exact original free-text validation, untouched below.
+        // Private Room instead requires a fee picked from the admin-approved list —
+        // the actual amount is resolved server-side from entryFeeId (see
+        // room.controller.createRoom), never from anything typed here.
+        if (isPrivate) {
+            if (!selectedFeeId) { setError('Select an entry fee'); return; }
+        } else {
         const fee = entryFee.trim();
         if (!fee || !/^\d+(\.\d{1,2})?$/.test(fee) || Number(fee) <= 0) {
             setError('Enter a valid entry fee (e.g. 10)');
             return;
         }
+        }
+
         const token = localStorage.getItem('ludo_token');
         if (!token) { setError('Not logged in'); return; }
 
@@ -37,7 +90,9 @@ const AddServer = () => {
         try {
             const createRes = await axios.post(
                 '/api/v1/rooms/create',
-                { entryFee: fee, maxPlayers, isPrivate },
+                isPrivate
+                    ? { entryFeeId: selectedFeeId, maxPlayers, isPrivate: true }
+                    : { entryFee: entryFee.trim(), maxPlayers, isPrivate: false },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const { roomId, roomCode } = createRes.data?.data;
@@ -118,13 +173,53 @@ const AddServer = () => {
             title='Host A Server'
             content={
                 <form className={styles.formContainer} onSubmit={handleSubmit}>
-                    <input
-                        type='text'
-                        placeholder='Entry Fee (e.g. 10)'
-                        value={entryFee}
-                        onChange={e => { setEntryFee(e.target.value); setError(''); }}
-                        style={{ border: error && !entryFee.trim() ? '1px solid red' : undefined }}
-                    />
+                    {isPrivate ? (
+                        // Admin-approved amounts only — see the feeOptions/selectedFeeId
+                        // state above. Nothing here is ever sent as a raw money value.
+                        <div className={styles.privateContainer}>
+                            <span>Entry Fee</span>
+                            {feesError ? (
+                                <span style={{ color: '#ff4d6a', fontSize: 13 }}>{feesError}</span>
+                            ) : feeRows === null ? (
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Loading entry fees…</span>
+                            ) : feeOptions.length === 0 ? (
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
+                                    No entry fees are available right now.
+                                </span>
+                            ) : (
+                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                    {feeOptions.map(f => (
+                                        <button
+                                            key={f.id}
+                                            type='button'
+                                            onClick={() => { setSelectedFeeId(f.id); setError(''); }}
+                                            style={{
+                                                padding: '4px 18px',
+                                                borderRadius: 6,
+                                                border: `1px solid ${selectedFeeId === f.id ? '#ff1a38' : 'rgba(255,255,255,0.2)'}`,
+                                                background: selectedFeeId === f.id ? 'rgba(255,24,58,0.22)' : 'transparent',
+                                                color: '#fff',
+                                                fontWeight: selectedFeeId === f.id ? 700 : 400,
+                                                cursor: 'pointer',
+                                                fontSize: 16,
+                                            }}
+                                        >
+                                            ₹{f.amount}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        // Public Match — unrestricted free-text amount, exactly as before.
+                        <input
+                            type='text'
+                            placeholder='Entry Fee (e.g. 10)'
+                            value={entryFee}
+                            onChange={e => { setEntryFee(e.target.value); setError(''); }}
+                            style={{ border: error && !entryFee.trim() ? '1px solid red' : undefined }}
+                        />
+                    )}
 
                     <div className={styles.privateContainer}>
                         <span>Max Players</span>
@@ -151,29 +246,33 @@ const AddServer = () => {
                         </div>
                     </div>
 
-                    {/* Room Type toggle */}
-                    <div className={styles.roomTypeRow}>
-                        <button
-                            type='button'
-                            className={`${styles.roomTypeBtn} ${!isPrivate ? styles.roomTypeActive : ''}`}
-                            onClick={() => setIsPrivate(false)}
-                        >
-                            <svg viewBox='0 0 20 20' fill='currentColor' width='15' height='15' aria-hidden='true'>
-                                <path d='M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.418 0-8 1.79-8 4v1h16v-1c0-2.21-3.582-4-8-4z' />
-                            </svg>
-                            Public
-                        </button>
-                        <button
-                            type='button'
-                            className={`${styles.roomTypeBtn} ${isPrivate ? styles.roomTypeActive : ''}`}
-                            onClick={() => setIsPrivate(true)}
-                        >
-                            <svg viewBox='0 0 20 20' fill='currentColor' width='15' height='15' aria-hidden='true'>
-                                <path fillRule='evenodd' d='M5 8V6a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h1zm2-2a3 3 0 0 1 6 0v2H7V6zm3 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2z' />
-                            </svg>
-                            Private
-                        </button>
-                    </div>
+                    {/* Room Type toggle — hidden while Public Match is disabled, not
+                        deleted: it comes back the moment the backend flag is re-enabled.
+                        Private Room stays available either way. */}
+                    {publicMatchEnabled && (
+                        <div className={styles.roomTypeRow}>
+                            <button
+                                type='button'
+                                className={`${styles.roomTypeBtn} ${!isPrivate ? styles.roomTypeActive : ''}`}
+                                onClick={() => setIsPrivate(false)}
+                            >
+                                <svg viewBox='0 0 20 20' fill='currentColor' width='15' height='15' aria-hidden='true'>
+                                    <path d='M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.418 0-8 1.79-8 4v1h16v-1c0-2.21-3.582-4-8-4z' />
+                                </svg>
+                                Public
+                            </button>
+                            <button
+                                type='button'
+                                className={`${styles.roomTypeBtn} ${isPrivate ? styles.roomTypeActive : ''}`}
+                                onClick={() => setIsPrivate(true)}
+                            >
+                                <svg viewBox='0 0 20 20' fill='currentColor' width='15' height='15' aria-hidden='true'>
+                                    <path fillRule='evenodd' d='M5 8V6a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h1zm2-2a3 3 0 0 1 6 0v2H7V6zm3 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2z' />
+                                </svg>
+                                Private
+                            </button>
+                        </div>
+                    )}
 
                     {isPrivate && (
                         <p className={styles.privateNote}>
@@ -185,7 +284,7 @@ const AddServer = () => {
                         <span style={{ color: '#ff4d6a', fontSize: 14, marginTop: -8 }}>{error}</span>
                     )}
 
-                    <button type='submit' disabled={loading}>
+                    <button type='submit' disabled={loading || (isPrivate && !selectedFeeId)}>
                         {loading ? 'Creating...' : 'Host Server'}
                     </button>
                 </form>

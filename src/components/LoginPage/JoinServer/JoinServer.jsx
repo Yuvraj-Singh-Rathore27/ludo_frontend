@@ -22,12 +22,34 @@ const TABS = ['public', 'pools', 'code'];
 // hidden. Several changes in a row are coalesced into one reload.
 const SAFETY_REFRESH_MS = 60000;
 const PUSH_DEBOUNCE_MS = 350;
+// Coming back to the page fires 'visibilitychange' AND 'focus' together (and every click back
+// from another window/DevTools fires 'focus' again), so a return-triggered reload waits at
+// least this long after the last reload of any kind.
+const RETURN_REFRESH_MIN_MS = 5000;
 
-const JoinServer = ({ onRoomsRefreshed }) => {
+// Public Match is a disabled-by-default legacy feature (see backend PUBLIC_MATCH_ENABLED —
+// its implementation is kept, just hidden from players). publicMatchEnabled comes from
+// the backend (via LoginPage's /api/v1/stats poll), never hard-coded here, so enabling
+// it again later needs no frontend change.
+// matches lists EVERY current match of an entry fee (joinable and full alike); only the
+// joinable ones count as open.
+const openCount = pool => (pool.matches || []).filter(m => m.joinable).length;
+const filledCount = pool => (pool.matches || []).filter(m => !m.joinable).length;
+const waitingCount = pool => (pool.matches || []).filter(m => m.joinable).reduce((n, m) => n + m.joinedPlayers, 0);
+
+const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     const setPlayerData = useContext(SetPlayerDataContext);
     const roomSocket = useContext(RoomSocketContext); // Fastify socket — pushes lobby changes
     const { authUser } = useAuth();
-    const [tab, setTab] = useState('public');
+    // Quick Match (the Pools tab) is the default/primary way to play now — Public Match,
+    // when enabled, is an extra option rather than the first thing a player sees.
+    const [tab, setTab] = useState('pools');
+
+    // If Public Match is (or becomes) disabled while it's the active tab — e.g. an admin
+    // flips the flag while this page is open — fall back to Quick Match immediately.
+    useEffect(() => {
+        if (tab === 'public' && !publicMatchEnabled) setTab('pools');
+    }, [tab, publicMatchEnabled]);
 
     /* ── Public rooms ─────────────────────────────────────────────────── */
     const [rooms, setRooms]     = useState([]);
@@ -62,7 +84,9 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         }
     }, []);
 
-    useEffect(() => { fetchRooms(); }, [fetchRooms]);
+    // Skip the fetch entirely while Public Match is disabled — nothing renders it, so
+    // there is no reason to ask the backend for a list nobody will see.
+    useEffect(() => { if (publicMatchEnabled) fetchRooms(); }, [fetchRooms, publicMatchEnabled]);
 
     const handleJoinClick = async room => {
         if (joiningId) return;
@@ -103,6 +127,9 @@ const JoinServer = ({ onRoomsRefreshed }) => {
     const [pools, setPools]           = useState([]);
     const [poolsLoading, setPoolsLoading] = useState(false);
     const [joiningPoolId, setJoiningPoolId] = useState(null);
+    const [joiningMatchId, setJoiningMatchId] = useState(null);
+    // Step 1 shows the entry fees; picking one opens step 2 with only that fee's matches.
+    const [selectedPoolId, setSelectedPoolId] = useState(null);
     const [poolError, setPoolError]   = useState('');
 
     const poolsInFlight = useRef(false);
@@ -116,7 +143,10 @@ const JoinServer = ({ onRoomsRefreshed }) => {
             setPoolError('');
         }
         try {
+            // quickMatch=true: only entry fees an admin has enabled as a Quick Match option
+            // (the Private Room picker asks for the full approved list instead).
             const res = await axios.get('/api/v1/pools/', {
+                params: { quickMatch: 'true' },
                 headers: { Authorization: `Bearer ${token}` },
             });
             setPools(res.data?.data || []);
@@ -143,9 +173,17 @@ const JoinServer = ({ onRoomsRefreshed }) => {
     useEffect(() => {
         if (tab !== 'public' && tab !== 'pools') return undefined;
 
-        const reload = () => (tab === 'public' ? fetchRooms({ quiet: true }) : fetchPools({ quiet: true }));
+        let lastReloadAt = 0;
+        const reload = () => {
+            lastReloadAt = Date.now();
+            return tab === 'public' ? fetchRooms({ quiet: true }) : fetchPools({ quiet: true });
+        };
         const reloadIfVisible = () => {
             if (document.visibilityState === 'visible') reload();
+        };
+        const reloadOnReturn = () => {
+            if (Date.now() - lastReloadAt < RETURN_REFRESH_MIN_MS) return;
+            reloadIfVisible();
         };
 
         // A burst of changes (several players joining at once) triggers one reload.
@@ -166,8 +204,8 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         // Safety net only — covers a push missed while the socket was down.
         const safetyId = setInterval(reloadIfVisible, SAFETY_REFRESH_MS);
         // Returning to the lobby (tab switch / app resumed) shows fresh rooms at once.
-        document.addEventListener('visibilitychange', reloadIfVisible);
-        window.addEventListener('focus', reloadIfVisible);
+        document.addEventListener('visibilitychange', reloadOnReturn);
+        window.addEventListener('focus', reloadOnReturn);
 
         return () => {
             if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
@@ -175,22 +213,25 @@ const JoinServer = ({ onRoomsRefreshed }) => {
             roomSocket?.off('connect', subscribe);
             roomSocket?.off('lobby:changed', onLobbyChanged);
             roomSocket?.emit('lobby:leave');
-            document.removeEventListener('visibilitychange', reloadIfVisible);
-            window.removeEventListener('focus', reloadIfVisible);
+            document.removeEventListener('visibilitychange', reloadOnReturn);
+            window.removeEventListener('focus', reloadOnReturn);
         };
     }, [tab, roomSocket, fetchRooms, fetchPools]);
 
-    const handleJoinPool = async pool => {
+    const selectedPool = pools.find(p => p.id === selectedPoolId) || null;
+
+    const handleJoinPool = async (pool, match = null) => {
         if (joiningPoolId) return;
         const token = localStorage.getItem('ludo_token');
         if (!token) return;
         setJoiningPoolId(pool.id);
+        setJoiningMatchId(match ? match.roomId : null);
         setPoolError('');
         try {
             const idempotencyKey = randomId();
             const res = await axios.post(
                 `/api/v1/pools/${pool.id}/join`,
-                { idempotencyKey },
+                { idempotencyKey, ...(match ? { roomId: match.roomId } : {}) },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const { color, isHost, room } = res.data?.data;
@@ -199,6 +240,9 @@ const JoinServer = ({ onRoomsRefreshed }) => {
         } catch (err) {
             setPoolError(err.response?.data?.message || 'Failed to join pool');
             setJoiningPoolId(null);
+            setJoiningMatchId(null);
+            // A match may have just filled — reload so the list shows what is really open.
+            fetchPools({ quiet: true });
         }
     };
 
@@ -236,7 +280,7 @@ const JoinServer = ({ onRoomsRefreshed }) => {
             titleComponent={
                 // The list keeps itself up to date; this stays for an on-demand refresh
                 // and spins while a request is in flight so a tap visibly does something.
-                (tab === 'public' || tab === 'pools') && (
+                ((tab === 'public' && publicMatchEnabled) || tab === 'pools') && (
                     <div className={styles.refresh}>
                         <img
                             src={refresh}
@@ -252,15 +296,20 @@ const JoinServer = ({ onRoomsRefreshed }) => {
                 <div className={styles.serversTableContainer}>
                     {/* Tabs */}
                     <div className={styles.tabs}>
-                        <button type='button'
-                            className={`${styles.tabBtn} ${tab === 'public' ? styles.tabActive : ''}`}
-                            onClick={() => setTab('public')}>
-                            Public
-                        </button>
+                        {/* Public Match: hidden while disabled, not deleted — the tab, its
+                            data fetching and its panel all come back the moment the backend
+                            flag (PUBLIC_MATCH_ENABLED) is switched on again. */}
+                        {publicMatchEnabled && (
+                            <button type='button'
+                                className={`${styles.tabBtn} ${tab === 'public' ? styles.tabActive : ''}`}
+                                onClick={() => setTab('public')}>
+                                Public
+                            </button>
+                        )}
                         <button type='button'
                             className={`${styles.tabBtn} ${tab === 'pools' ? styles.tabActive : ''}`}
                             onClick={() => setTab('pools')}>
-                            Pools
+                            ⚡ Quick Match
                         </button>
                         <button type='button'
                             className={`${styles.tabBtn} ${tab === 'code' ? styles.tabActive : ''}`}
@@ -269,8 +318,8 @@ const JoinServer = ({ onRoomsRefreshed }) => {
                         </button>
                     </div>
 
-                    {/* ── Public Rooms ── */}
-                    {tab === 'public' && (
+                    {/* ── Public Rooms (hidden unless re-enabled — see publicMatchEnabled) ── */}
+                    {tab === 'public' && publicMatchEnabled && (
                         <>
                             {roomError && <p style={{ color: '#ff4d6a', fontSize: 14, padding: '8px 16px', margin: 0 }}>{roomError}</p>}
                             <ServersTableWithLoading
@@ -292,34 +341,112 @@ const JoinServer = ({ onRoomsRefreshed }) => {
                                 </p>
                             ) : pools.length === 0 ? (
                                 <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', padding: '28px 0', margin: 0, fontSize: 14 }}>
-                                    No active pools right now
+                                    No Quick Match options right now
                                 </p>
                             ) : (
-                                pools.map(pool => (
-                                    <div key={pool.id} className={styles.poolCard}>
-                                        <div className={styles.poolInfo}>
-                                            <span className={styles.poolName}>{pool.name}</span>
-                                            {pool.description && (
-                                                <span className={styles.poolDesc}>{pool.description}</span>
-                                            )}
-                                            <div className={styles.poolMeta}>
-                                                <span>₹{pool.entryFee} entry</span>
-                                                <span className={styles.poolDot}>·</span>
-                                                <span>{pool.maxPlayers} players</span>
-                                                <span className={styles.poolDot}>·</span>
-                                                <span className={styles.poolPrize}>₹{pool.prizePool} prize</span>
+                                selectedPool ? (
+                                    <div className={styles.poolGroup}>
+                                        <div className={styles.poolDetailHead}>
+                                            <button type='button' className={styles.poolBack} onClick={() => setSelectedPoolId(null)}>
+                                                ‹ Back
+                                            </button>
+                                            <div className={styles.poolDetailTitle}>
+                                                <span className={styles.poolName}>₹{Number(selectedPool.entryFee)} Quick Match</span>
+                                                <div className={styles.poolMeta}>
+                                                    <span>{selectedPool.maxPlayers} players/match</span>
+                                                    <span className={styles.poolDot}>·</span>
+                                                    <span className={styles.poolPrize}>₹{selectedPool.prizePool} prize</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type='button'
+                                                className={styles.poolJoinBtn}
+                                                disabled={!!joiningPoolId || !openCount(selectedPool)}
+                                                onClick={() => handleJoinPool(selectedPool)}
+                                            >
+                                                {joiningPoolId === selectedPool.id && !joiningMatchId ? 'Finding…' : 'Find Match'}
+                                            </button>
+                                        </div>
+                                        <div className={styles.poolStats}>
+                                            <div className={styles.poolStat}>
+                                                <span className={styles.poolStatValue}>{selectedPool.matches?.length || 0}</span>
+                                                <span className={styles.poolStatLabel}>Total</span>
+                                            </div>
+                                            <div className={styles.poolStat}>
+                                                <span className={styles.poolStatValue}>{openCount(selectedPool)}</span>
+                                                <span className={styles.poolStatLabel}>Open</span>
+                                            </div>
+                                            <div className={styles.poolStat}>
+                                                <span className={styles.poolStatValue}>{filledCount(selectedPool)}</span>
+                                                <span className={styles.poolStatLabel}>Filled</span>
+                                            </div>
+                                            <div className={styles.poolStat}>
+                                                <span className={styles.poolStatValue}>
+                                                    {waitingCount(selectedPool)}/{openCount(selectedPool) * selectedPool.maxPlayers}
+                                                </span>
+                                                <span className={styles.poolStatLabel}>Players waiting</span>
                                             </div>
                                         </div>
-                                        <button
-                                            type='button'
-                                            className={styles.poolJoinBtn}
-                                            disabled={!!joiningPoolId}
-                                            onClick={() => handleJoinPool(pool)}
-                                        >
-                                            {joiningPoolId === pool.id ? 'Joining…' : 'Join'}
-                                        </button>
+                                        {selectedPool.matches?.length > 0 ? (
+                                            <div className={styles.poolMatchList}>
+                                                {selectedPool.matches.map(m => (
+                                                    <div key={m.roomId} className={styles.poolMatchRow}>
+                                                        <div className={styles.poolMatchLeft}>
+                                                            <span className={styles.poolMatchName}>Match #{m.number}</span>
+                                                            <span className={styles.poolMatchId}>{m.roomId}</span>
+                                                        </div>
+                                                        <span className={styles.poolMatchCount}>{m.joinedPlayers}/{m.maxPlayers}</span>
+                                                        <span className={`${styles.poolMatchState} ${styles['poolState' + m.state]}`}>{m.state}</span>
+                                                        <button
+                                                            type='button'
+                                                            className={styles.poolMatchBtn}
+                                                            disabled={!!joiningPoolId || !m.joinable}
+                                                            onClick={() => handleJoinPool(selectedPool, m)}
+                                                        >
+                                                            {joiningMatchId === m.roomId ? 'Joining…' : m.joinable ? 'Join' : 'Full'}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', padding: '20px 0', margin: 0, fontSize: 14 }}>
+                                                No open matches for ₹{Number(selectedPool.entryFee)} right now
+                                            </p>
+                                        )}
                                     </div>
-                                ))
+                                ) : (
+                                    pools.map(pool => (
+                                        <div
+                                            key={pool.id}
+                                            className={`${styles.poolCard} ${styles.poolCardClickable}`}
+                                            role='button'
+                                            tabIndex={0}
+                                            onClick={() => setSelectedPoolId(pool.id)}
+                                            onKeyDown={e => { if (e.key === 'Enter') setSelectedPoolId(pool.id); }}
+                                        >
+                                            <div className={styles.poolInfo}>
+                                                <span className={styles.poolName}>{pool.name}</span>
+                                                {pool.description && (
+                                                    <span className={styles.poolDesc}>{pool.description}</span>
+                                                )}
+                                                <div className={styles.poolMeta}>
+                                                    <span>₹{pool.entryFee} entry</span>
+                                                    <span className={styles.poolDot}>·</span>
+                                                    <span>{pool.maxPlayers} players/match</span>
+                                                    <span className={styles.poolDot}>·</span>
+                                                    <span className={styles.poolPrize}>₹{pool.prizePool} prize</span>
+                                                    {Array.isArray(pool.matches) && (
+                                                        <>
+                                                            <span className={styles.poolDot}>·</span>
+                                                            <span>{openCount(pool)} open match{openCount(pool) === 1 ? '' : 'es'}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className={styles.poolOpenLink}>View matches ›</span>
+                                        </div>
+                                    ))
+                                )
                             )}
                         </div>
                     )}

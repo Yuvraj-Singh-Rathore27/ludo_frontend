@@ -680,8 +680,16 @@ const Gameboard = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setRoomInfo(res.data?.data || null);
-        } catch {}
-    }, [context?.roomId]);
+        } catch (err) {
+            // The room no longer exists, yet a saved session sent this browser here: drop it
+            // and return to the lobby instead of sitting on an empty waiting screen. Network
+            // errors are ignored — the next poll retries once the API is reachable again.
+            if (err?.response?.status === 404) {
+                setPlayerData(null);
+                navigate('/lobby');
+            }
+        }
+    }, [context?.roomId, navigate, setPlayerData]);
 
     const roomStatus = roomInfo?.roomStatus;
     const isRoomActive = !roomStatus || roomStatus === 'WAITING' || roomStatus === 'READY';
