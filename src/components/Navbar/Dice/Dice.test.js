@@ -131,4 +131,31 @@ describe('Dice component', () => {
         expect(mockSocket.emit).toHaveBeenCalledWith('game:roll', undefined);
         play.mockRestore();
     });
+
+    describe('dock idle die (no false 6)', () => {
+        const dockDieSrc = extra => {
+            render(<Dice variant='dock' movingPlayer='red' playerColor='red' nowMoving={false} {...extra} />);
+            return screen.getByRole('img', { hidden: true }).getAttribute('src');
+        };
+
+        it.each([null, undefined])('shows the roll image, not the 6 face, when rolledNumber is %s', value => {
+            const src = dockDieSrc({ rolledNumber: value });
+            expect(src).toMatch(/roll/);
+            expect(src).not.toMatch(/6/);
+        });
+
+        // An actual roll is shown by the 3D cube's landed-result badge, never by the idle die.
+        it.each([1, 2, 6])('still shows the actual roll of %s once the dice lands', n => {
+            jest.useFakeTimers();
+            try {
+                render(<Dice variant='dock' movingPlayer='red' playerColor='red' nowMoving={false} rolledNumber={n} />);
+                act(() => {
+                    jest.advanceTimersByTime(3000);
+                });
+                expect(screen.getByText(String(n))).toBeInTheDocument();
+            } finally {
+                jest.useRealTimers();
+            }
+        });
+    });
 });

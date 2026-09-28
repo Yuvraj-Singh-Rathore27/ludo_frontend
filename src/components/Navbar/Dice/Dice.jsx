@@ -40,6 +40,9 @@ const buildLandTransform = rolledNumber => {
     return `rotateX(${x}deg) rotateY(${y}deg) rotateZ(${z}deg)`;
 };
 
+// diceImages.js layout: [faces 1..6, roll]. The roll button uses the same image.
+const ROLL_IMAGE_INDEX = 6;
+
 const SETTLED_PHASES = new Set(['landing', 'landed', 'noMove']);
 
 const DiceCube = ({ phase, landTransform }) => (
@@ -263,7 +266,9 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
             <div className={`${styles.container} ${styles.dockContainer}`}>
                 <img
                     className={styles.dockIdleDie}
-                    src={hasRolledNumber ? images[rolledNumber - 1] : images[5]}
+                    // No roll to show → the neutral "roll" image, never a die face:
+                    // images[5] is the 6 face and used to flash here after every move.
+                    src={hasRolledNumber ? images[rolledNumber - 1] : images[ROLL_IMAGE_INDEX]}
                     alt=''
                 />
             </div>
@@ -306,7 +311,7 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
                             onClick={handleClick}
                             disabled={phase !== 'idle'}
                         >
-                            <img src={images[6]} alt='roll' />
+                            <img src={images[ROLL_IMAGE_INDEX]} alt='roll' />
                         </button>
                         <span className={styles.rollLabel}>{offlineHint ? 'Reconnecting…' : 'Roll Dice'}</span>
                     </span>

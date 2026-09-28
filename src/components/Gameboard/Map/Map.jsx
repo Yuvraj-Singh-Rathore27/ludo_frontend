@@ -6,6 +6,7 @@ import pawnImages from '../../../constants/pawnImages';
 import canPawnMove from './canPawnMove';
 import getPositionAfterMove from './getPositionAfterMove';
 import { isValidPawnPosition } from './boardPath';
+import { planCaptureDelays } from './captureSequence';
 import { toneBoardPixels, STAR_FILL, STAR_STROKE } from './boardTone';
 import { getLocalPerspective, rotatePoint } from '../perspective';
 import { MIN_SPIN_MS, LANDING_MS, RESULT_HOLD_MS } from '../../Navbar/Dice/diceTiming';
@@ -402,6 +403,14 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             }
 
             const elapsed = now - animation.start;
+            if (elapsed < 0) {
+                // A captured pawn holds its cell until the attacker has landed on it
+                // (see captureSequence.js), so the cut reads as a consequence of the move.
+                stillAnimating = true;
+                const held = positionMapCoords[animation.cells[0]];
+                tokens.push({ color: pawn.color, x: held.x, y: held.y, scale: 1, moving: 0 });
+                return;
+            }
             const legs = animation.cells.length - 1;
             const rawLeg = Math.floor(elapsed / animation.perHop);
 
@@ -487,6 +496,8 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
     useEffect(() => {
         const previous = prevPositionsRef.current;
         const next = {};
+        const now = performance.now();
+        const started = {};
 
         pawns.forEach(pawn => {
             next[pawn._id] = pawn.position;
@@ -494,15 +505,25 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             if (before === undefined || before === pawn.position) return;
 
             const route = deriveRoute(pawn, before, pawn.position);
-            animationsRef.current[pawn._id] = {
+            started[pawn._id] = animationsRef.current[pawn._id] = {
                 cells: route || [before, pawn.position],
                 perHop: route ? HOP_MS : SLIDE_MS,
                 lift: route ? HOP_LIFT : SLIDE_LIFT,
                 ease: !route,
                 slide: !route, // capture / reset — thud instead of a step tick
                 playedLeg: -1,
-                start: performance.now(),
+                start: now,
             };
+        });
+
+        // A captured pawn only starts going home once the pawn that captured it has
+        // finished its own animation (its real length, not a fixed delay).
+        const delays = planCaptureDelays(pawns, previous, id => {
+            const a = started[id];
+            return a ? (a.cells.length - 1) * a.perHop : 0;
+        });
+        Object.keys(delays).forEach(id => {
+            if (started[id]) started[id].start = now + delays[id];
         });
 
         prevPositionsRef.current = next;
@@ -583,7 +604,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             const target = pawnAtPoint(
                 cursorX,
                 cursorY,
-                pawn => pawn.color === player.color && canPawnMove(pawn, rolledNumber),
+                pawn => pawn.color === player.color && canPawnMove(pawn, rolledNumber, pawns),
                 hitRadiusFor(rect, canvas)
             );
             // Offline, socket.io would buffer the move and send it whenever the
@@ -600,7 +621,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             hintPawnRef.current = null;
             setHintPawn(null);
         },
-        [pawnAtPoint, player.color, player.roomId, rolledNumber, socket, rotation]
+        [pawnAtPoint, pawns, player.color, player.roomId, rolledNumber, socket, rotation]
     );
 
     // ── Mouse move handler ─────────────────────────────────────────────────────
@@ -628,7 +649,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
                 const hovered = pawnAtPoint(
                     x,
                     y,
-                    pawn => player.color === pawn.color && canPawnMove(pawn, rolledNumber),
+                    pawn => player.color === pawn.color && canPawnMove(pawn, rolledNumber, pawns),
                     hitRadiusFor(rect, canvas)
                 );
                 if (hovered) {
@@ -654,7 +675,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
                 }
             });
         },
-        [nowMoving, rolledNumber, pawnAtPoint, player.color, rotation]
+        [nowMoving, rolledNumber, pawnAtPoint, pawns, player.color, rotation]
     );
 
     // The hint was only ever cleared by a click or by hovering off a pawn. A move
@@ -705,7 +726,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
         }
         if (autoMovedForRef.current === rolledNumber) return; // already scheduled for this roll
 
-        const myMovablePawns = pawns.filter(pawn => pawn.color === player.color && canPawnMove(pawn, rolledNumber));
+        const myMovablePawns = pawns.filter(pawn => pawn.color === player.color && canPawnMove(pawn, rolledNumber, pawns));
         if (myMovablePawns.length !== 1) return;
 
         autoMovedForRef.current = rolledNumber;

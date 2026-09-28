@@ -40,9 +40,18 @@ const AddServer = ({ publicMatchEnabled = false }) => {
     useEffect(() => {
         if (!isPrivate) return;
         let alive = true;
-        axios.get('/api/v1/pools/')
+        // /api/v1/pools/ requires a login, so send the token like JoinServer does. Without
+        // it every load started as a 401 and only worked by way of the refresh interceptor
+        // (which rotates the refresh token, and logs the player out if it can't recover).
+        // An expired token still gets the same interceptor refresh-and-retry.
+        const token = localStorage.getItem('ludo_token');
+        if (!token) {
+            setFeesError('Not logged in — please log in again to host a room');
+            return undefined;
+        }
+        axios.get('/api/v1/pools/', { headers: { Authorization: `Bearer ${token}` } })
             .then(res => { if (alive) setFeeRows(res.data?.data || []); })
-            .catch(() => { if (alive) setFeesError('Could not load entry fees'); });
+            .catch(() => { if (alive) setFeesError('Could not load entry fees. Please try again.'); });
         return () => { alive = false; };
     }, [isPrivate]);
 
@@ -282,6 +291,13 @@ const AddServer = ({ publicMatchEnabled = false }) => {
 
                     {error && (
                         <span style={{ color: '#ff4d6a', fontSize: 14, marginTop: -8 }}>{error}</span>
+                    )}
+
+                    {/* Say why the button is greyed out instead of leaving it silently dead. */}
+                    {isPrivate && !selectedFeeId && !loading && feeOptions.length > 0 && (
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: -8 }}>
+                            Select an entry fee to host.
+                        </span>
                     )}
 
                     <button type='submit' disabled={loading || (isPrivate && !selectedFeeId)}>
