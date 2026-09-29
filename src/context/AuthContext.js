@@ -98,11 +98,15 @@ export const AuthProvider = ({ children }) => {
             res => res,
             async error => {
                 const original = error.config;
-                /* Skip: not a 401, already retried, or the refresh call itself failed */
+                /* Skip: not a 401, already retried, the refresh call itself failed,
+                   the DABBA sync call (401 there = bad DABBA token, not Ludo), or a
+                   non-Ludo URL (e.g. DABBA API) — never send the Ludo token elsewhere */
                 if (
                     error.response?.status !== 401 ||
                     original._retry ||
-                    original.url?.includes('/refresh')
+                    original.url?.includes('/refresh') ||
+                    original.url?.includes('/daba/sync') ||
+                    !original.url?.startsWith('/api/')
                 ) {
                     return Promise.reject(error);
                 }
@@ -152,6 +156,17 @@ export const AuthProvider = ({ children }) => {
         apiCall(async () => {
             const identifier = toMobile(phone, country_code);
             const response = await axios.post(`${API}/login-password`, { identifier, password });
+            const result = unwrap(response);
+            if (result.data?.user) persistUser(result.data.user, result.data.accessToken, result.data.refreshToken);
+            return result;
+        }), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    /* ── DABBA launch login: backend verifies the DABBA token with DABBA, syncs the
+       user, and returns Ludo's own tokens. Only the Ludo tokens are stored here. ── */
+    // launch = { data } (encrypted DABBA launch) or { user_id, access_token } (old plain launch)
+    const loginWithDaba = useCallback(launch =>
+        apiCall(async () => {
+            const response = await axios.post(`${API}/daba/sync`, { source: 'dabba', ...launch });
             const result = unwrap(response);
             if (result.data?.user) persistUser(result.data.user, result.data.accessToken, result.data.refreshToken);
             return result;
@@ -292,6 +307,7 @@ export const AuthProvider = ({ children }) => {
         verifyOtpAndLogin,
         loginWithEmail,
         loginWithPhone,
+        loginWithDaba,
         forgotPassword,
         resetPassword,
         forgotSendOtp,
@@ -312,6 +328,7 @@ export const AuthProvider = ({ children }) => {
         verifyOtpAndLogin,
         loginWithEmail,
         loginWithPhone,
+        loginWithDaba,
         forgotPassword,
         resetPassword,
         forgotSendOtp,

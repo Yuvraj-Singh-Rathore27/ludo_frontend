@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLaunch } from '../../context/LaunchContext';
 import { useWallet } from '../../context/WalletContext';
 import { useAudioSettings } from '../../context/AudioContext';
 import logoDice from '../../images/pages/ludi-profile.webp';
@@ -83,6 +84,9 @@ const fmt = n => {
 
 const GlobalNavbar = ({ activePage = 'home' }) => {
     const { authUser, logout } = useAuth();
+    const { launchUser: dabaProfile, clearLaunch } = useLaunch();
+    // DABBA profile only for the Ludo user it belongs to; normal Ludo users keep their own data.
+    const launchUser = dabaProfile && authUser?.dabaUserId === dabaProfile.userId ? dabaProfile : null;
     const { balance, fetchBalance } = useWallet();
     const { muted, toggleMute } = useAudioSettings();
     const navigate = useNavigate();
@@ -95,14 +99,31 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
     const menuButtonRef = useRef(null);
     const drawerRef = useRef(null);
 
-    const initials = useMemo(() => getInitials(authUser), [authUser]);
-    const displayName = useMemo(() => (authUser?.displayName || '')
-        .split(' ')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' '), [authUser?.displayName]);
+    const initials = useMemo(
+        () => launchUser ? getInitials({ displayName: launchUser.teamName || launchUser.name }) : getInitials(authUser),
+        [authUser, launchUser],
+    );
+    const displayName = useMemo(() => launchUser
+        ? (launchUser.teamName || launchUser.name)
+        : (authUser?.displayName || '')
+            .split(' ')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' '), [authUser?.displayName, launchUser]);
+    const avatarUrl = launchUser?.image || '';
+    const mobile    = launchUser?.mobile || authUser?.mobile || '';
+    const [avatarFailed, setAvatarFailed] = useState(false);
+    useEffect(() => { setAvatarFailed(false); }, [avatarUrl]);
+    const showPhoto = !!avatarUrl && !avatarFailed;
 
-    const totalBalance   = balance?.totalBalance  ?? 0;
+    // Ludo wallet balance for everyone — for DABBA players it is synced to the DABBA balance
+    // on launch. The DABBA amount only fills in until the Ludo balance has loaded.
+    const totalBalance   = balance?.totalBalance  ?? launchUser?.walletAmount ?? 0;
     const blockedBalance = balance?.lockedBalance ?? 0;
+
+    // Profile photo when available, otherwise the existing initials / icon.
+    const avatarContent = fallback => showPhoto
+        ? <img className={styles.avatarImg} src={avatarUrl} alt={displayName || 'Player'} onError={() => setAvatarFailed(true)} />
+        : fallback;
 
     useEffect(() => {
         if (authUser) fetchBalance().catch(() => {});
@@ -125,6 +146,7 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
 
     const handleLogout = async () => {
         try { await logout(); } catch {}
+        clearLaunch();
         setProfileOpen(false);
         setMenuOpen(false);
         navigate('/auth/login', { replace: true });
@@ -258,14 +280,14 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                             onClick={handleToggle}
                         >
                             <div className={styles.profileAvatarCircle}>
-                                {initials ? (
+                                {avatarContent(initials ? (
                                     <span>{initials}</span>
                                 ) : (
                                     <svg viewBox='0 0 48 48' fill='none' aria-hidden='true'>
                                         <circle cx='24' cy='17' r='9' fill='currentColor' />
                                         <path d='M5 44c1.3-11 8-16.5 19-16.5S42.7 33 44 44' fill='currentColor' fillOpacity='0.8' />
                                     </svg>
-                                )}
+                                ))}
                             </div>
                             {displayName && <span className={styles.profileToggleName}>{displayName}</span>}
                             <svg className={styles.profileChevron} viewBox='0 0 16 16' fill='none' aria-hidden='true'>
@@ -284,16 +306,16 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                 >
                     <div className={styles.dropdownUser}>
                         <div className={styles.dropdownAvatar}>
-                            {initials || (
+                            {avatarContent(initials || (
                                 <svg viewBox='0 0 48 48' fill='none' aria-hidden='true'>
                                     <circle cx='24' cy='17' r='9' fill='currentColor' />
                                     <path d='M5 44c1.3-11 8-16.5 19-16.5S42.7 33 44 44' fill='currentColor' fillOpacity='0.8' />
                                 </svg>
-                            )}
+                            ))}
                         </div>
                         <div>
                             <strong>{displayName || 'Player'}</strong>
-                            {authUser?.mobile && <span>{authUser.mobile}</span>}
+                            {mobile && <span>{mobile}</span>}
                         </div>
                     </div>
                     <hr className={styles.dropdownDivider} />
@@ -333,16 +355,16 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                     >
                         <div className={styles.drawerHeader}>
                             <div className={styles.drawerAvatar}>
-                                {initials || (
+                                {avatarContent(initials || (
                                     <svg viewBox='0 0 48 48' fill='none' aria-hidden='true'>
                                         <circle cx='24' cy='17' r='9' fill='currentColor' />
                                         <path d='M5 44c1.3-11 8-16.5 19-16.5S42.7 33 44 44' fill='currentColor' fillOpacity='0.8' />
                                     </svg>
-                                )}
+                                ))}
                             </div>
                             <div className={styles.drawerIdentity}>
                                 <strong>{displayName || 'Player'}</strong>
-                                {authUser?.mobile && <span>{authUser.mobile}</span>}
+                                {mobile && <span>{mobile}</span>}
                             </div>
                         </div>
 

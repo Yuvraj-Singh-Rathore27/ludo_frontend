@@ -36,7 +36,7 @@ const hasAmount = value => value !== undefined && value !== null && value !== ''
 const QUICK_AMOUNTS = [100, 200, 500, 1000];
 
 /* ─── TxRow ──────────────────────────────────────────────── */
-const DEBIT_TYPES = new Set(['GAME_ENTRY', 'WITHDRAWAL', 'ADMIN_DEBIT']);
+const DEBIT_TYPES = new Set(['GAME_ENTRY', 'WITHDRAWAL', 'ADMIN_DEBIT', 'DABBA_DEBIT']);
 
 const TxRow = ({ tx }) => {
     const isCredit = !DEBIT_TYPES.has(tx.type);

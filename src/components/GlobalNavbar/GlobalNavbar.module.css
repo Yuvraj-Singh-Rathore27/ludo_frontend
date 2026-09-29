@@ -393,6 +393,21 @@
     height: 58%;
 }
 
+/* Profile photo inside any of the round avatars (navbar, dropdown, drawer) */
+.profileAvatarCircle,
+.dropdownAvatar,
+.drawerAvatar {
+    overflow: hidden;
+}
+
+.avatarImg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
 .profileToggleName {
     color: rgba(255, 255, 255, 0.92);
     font-size: 14px;

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 import Gameboard       from './components/Gameboard/Gameboard';
 import GlobalLoader    from './components/GlobalLoader/GlobalLoader';
+import loaderStyles    from './components/GlobalLoader/GlobalLoader.module.css';
 import LoginPage       from './components/LoginPage/LoginPage';
 import ProfilePage     from './components/Profile/ProfilePage';
 import WalletPage      from './components/Wallet/WalletPage';
@@ -13,6 +14,31 @@ import AuthLoginScreen from './components/Auth/AuthLoginScreen/AuthLoginScreen';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WalletProvider }        from './context/WalletContext';
 import { AudioProvider }         from './context/AudioContext';
+import { LaunchProvider, useLaunch } from './context/LaunchContext';
+
+// Shown when a DABBA launch link fails. "Continue" drops the link and falls back to the
+// normal flow (Lobby if a Ludo session exists, otherwise Login).
+const LaunchError = ({ onContinue }) => (
+    <main className={loaderStyles.container} role='alert'>
+        <div className={loaderStyles.card}>
+            <div className={loaderStyles.mark}>L</div>
+            <div className={loaderStyles.copy}>
+                <h1>Link expired or invalid</h1>
+                <p>Please open Ludo again from the DABBA app.</p>
+            </div>
+            <button
+                type='button'
+                onClick={onContinue}
+                style={{
+                    marginTop: 8, padding: '10px 22px', borderRadius: 8, border: 'none',
+                    background: '#ffd670', color: '#1a0d00', fontWeight: 800, cursor: 'pointer',
+                }}
+            >
+                Continue
+            </button>
+        </div>
+    </main>
+);
 
 export const PlayerDataContext    = createContext();
 export const SetPlayerDataContext = createContext();
@@ -21,6 +47,7 @@ export const RoomSocketContext    = createContext(); // new Fastify socket (port
 
 const AppRoutes = () => {
     const { authUser } = useAuth();
+    const { dabaLoginPending, dabaLaunchError, dismissLaunchError } = useLaunch();
     const loggedIn = !!authUser;
 
     const [playerData,   setPlayerData]   = useState(null);
@@ -127,6 +154,16 @@ const AppRoutes = () => {
         };
     }, [loggedIn]);
 
+    // DABBA launch link: wait for the Ludo login instead of bouncing to the Login page.
+    if (dabaLoginPending) {
+        return <GlobalLoader title='Loading Ludo Arena' message='Logging you in...' />;
+    }
+
+    // DABBA launch link rejected (expired / tampered / not verified by DABBA).
+    if (dabaLaunchError) {
+        return <LaunchError onContinue={dismissLaunchError} />;
+    }
+
     if (loading) {
         return <GlobalLoader title='Loading Ludo Arena' message='Connecting players...' />;
     }
@@ -210,11 +247,13 @@ function App() {
     return (
         <AudioProvider>
             <AuthProvider>
+            <LaunchProvider>
                 <WalletProvider>
                     <Router>
                         <AppRoutes />
                     </Router>
                 </WalletProvider>
+            </LaunchProvider>
             </AuthProvider>
         </AudioProvider>
     );
