@@ -844,3 +844,10 @@
     .quickAmounts { gap: 6px; }
     .quickBtn { height: 30px; padding: 0 10px; font-size: 11px; }
 }
+
+/* DABBA launch: no bottom bar, so drop the space reserved for it. */
+@media (max-width: 900px) {
+    .pageRoot.dabbaRoot .page {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+}

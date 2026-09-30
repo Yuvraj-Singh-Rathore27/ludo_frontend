@@ -131,6 +131,21 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
         if (authUser) fetchBalance().catch(() => {});
     }, [authUser, fetchBalance]);
 
+    // DABBA players: the wallet lives in DABBA and can change from another device, so
+    // re-read it (backend asks DABBA /balance) when the tab is back in view and every 30 s.
+    useEffect(() => {
+        if (!isDabbaUser) return undefined;
+        const refresh = () => {
+            if (document.visibilityState === 'visible') fetchBalance().catch(() => {});
+        };
+        const id = setInterval(refresh, 30000);
+        document.addEventListener('visibilitychange', refresh);
+        return () => {
+            clearInterval(id);
+            document.removeEventListener('visibilitychange', refresh);
+        };
+    }, [isDabbaUser, fetchBalance]);
+
     const handleToggle = () => {
         if (!profileOpen && toggleRef.current) {
             const rect = toggleRef.current.getBoundingClientRect();
@@ -444,6 +459,8 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
             )}
 
             {/* ── MOBILE BOTTOM NAV ── */}
+            {/* DABBA: bottom bar hidden (normal users still see it) */}
+            {!isDabbaUser && (
             <nav className={styles.bottomNav} aria-label='Mobile navigation'>
                 <Link className={activePage === 'home' ? styles.bottomActive : ''} to='/lobby'>
                     <NavIcon type='home' className={styles.bottomIcon} />
@@ -470,6 +487,7 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                     <span>Wallet</span>
                 </Link>
             </nav>
+            )}
         </>
     );
 };

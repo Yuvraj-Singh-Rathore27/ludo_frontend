@@ -219,7 +219,7 @@ const LoginPage = () => {
     }, [authUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div className={styles.pageRoot} style={{ '--bg-img': `url(${bgImage})` }}>
+        <div className={`${styles.pageRoot} ${isDabbaUser ? styles.dabbaRoot : ''}`} style={{ '--bg-img': `url(${bgImage})` }}>
 
             {/* ── TOP NAV BAR — outside container so sticky works through overflow-x: hidden ── */}
             <GlobalNavbar activePage='home' />

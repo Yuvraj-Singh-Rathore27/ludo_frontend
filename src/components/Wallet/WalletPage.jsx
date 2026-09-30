@@ -143,7 +143,7 @@ const WalletPage = () => {
     const totalWon        = parseFloat(balance?.totalWon         ?? 0);
 
     return (
-        <div className={styles.pageRoot}>
+        <div className={`${styles.pageRoot} ${isDabbaUser ? styles.dabbaRoot : ''}`}>
             <GlobalNavbar activePage='wallet' />
 
             <div className={styles.page}>

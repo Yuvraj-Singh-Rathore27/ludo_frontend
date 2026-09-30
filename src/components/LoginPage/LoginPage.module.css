@@ -1943,3 +1943,11 @@
 .mobileTabs.mobileTabsSingle {
     grid-template-columns: 1fr;
 }
+
+/* DABBA launch: no bottom bar, so drop the space reserved for it — the page ends
+   dark instead of showing an empty strip at the bottom. */
+@media (max-width: 900px) {
+    .pageRoot.dabbaRoot .container {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+}
