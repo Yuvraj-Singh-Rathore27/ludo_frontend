@@ -41,6 +41,9 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     const setPlayerData = useContext(SetPlayerDataContext);
     const roomSocket = useContext(RoomSocketContext); // Fastify socket — pushes lobby changes
     const { authUser } = useAuth();
+    // DABBA launch: only Quick Match is shown (join-by-Code hidden) and the panel is titled
+    // "Join Room". Normal Ludo users keep every tab.
+    const isDabbaUser = !!authUser?.dabaUserId;
     // Quick Match (the Pools tab) is the default/primary way to play now — Public Match,
     // when enabled, is an extra option rather than the first thing a player sees.
     const [tab, setTab] = useState('pools');
@@ -50,6 +53,11 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     useEffect(() => {
         if (tab === 'public' && !publicMatchEnabled) setTab('pools');
     }, [tab, publicMatchEnabled]);
+
+    // DABBA: the Code tab doesn't exist for them — never leave it active.
+    useEffect(() => {
+        if (tab === 'code' && isDabbaUser) setTab('pools');
+    }, [tab, isDabbaUser]);
 
     /* ── Public rooms ─────────────────────────────────────────────────── */
     const [rooms, setRooms]     = useState([]);
@@ -276,7 +284,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
 
     return (
         <WindowLayout
-            title='Join A Server'
+            title={isDabbaUser ? 'Join Room' : 'Join A Server'}
             titleComponent={
                 // The list keeps itself up to date; this stays for an on-demand refresh
                 // and spins while a request is in flight so a tap visibly does something.
@@ -311,11 +319,14 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                             onClick={() => setTab('pools')}>
                             ⚡ Quick Match
                         </button>
-                        <button type='button'
-                            className={`${styles.tabBtn} ${tab === 'code' ? styles.tabActive : ''}`}
-                            onClick={() => setTab('code')}>
-                            🔒 Code
-                        </button>
+                        {/* DABBA: Code tab hidden (normal users still see it) */}
+                        {!isDabbaUser && (
+                            <button type='button'
+                                className={`${styles.tabBtn} ${tab === 'code' ? styles.tabActive : ''}`}
+                                onClick={() => setTab('code')}>
+                                🔒 Code
+                            </button>
+                        )}
                     </div>
 
                     {/* ── Public Rooms (hidden unless re-enabled — see publicMatchEnabled) ── */}
@@ -452,7 +463,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                     )}
 
                     {/* ── Join by Code ── */}
-                    {tab === 'code' && (
+                    {tab === 'code' && !isDabbaUser && (
                         <form className={styles.codeForm} onSubmit={handleJoinByCode}>
                             <p className={styles.codeHint}>
                                 Ask the room host for their 6-letter private room code

@@ -157,6 +157,9 @@ const LoginPage = () => {
     const dismissedRef = useRef(false); // true after user clicks Dismiss — stops re-showing
     const setPlayerData = useContext(SetPlayerDataContext);
     const { authUser } = useAuth();
+    // DABBA launch (dabaUserId is set only by the DABBA login): Quick Match + Join Room only —
+    // Host A Server and join-by-Code are hidden. Normal Ludo users keep the full lobby.
+    const isDabbaUser = !!authUser?.dabaUserId;
 
     const fetchStats = useCallback(async (signal) => {
         try {
@@ -370,33 +373,40 @@ const LoginPage = () => {
             </button>
 
             {/* ── MOBILE TABS (hidden on desktop) ── */}
-            <div className={styles.mobileTabs}>
+            <div className={`${styles.mobileTabs} ${isDabbaUser ? styles.mobileTabsSingle : ''}`}>
                 <button
                     className={mobileTab === 'join' ? styles.activeTab : ''}
                     onClick={() => setMobileTab('join')}
                     type='button'
                 >
                     <Icon type='gamepad' className={styles.navSvgIcon} />
-                    Join A Server
+                    {/* DABBA: "Join A Server" is shown as "Join Room" */}
+                    {isDabbaUser ? 'Join Room' : 'Join A Server'}
                 </button>
-                <button
-                    className={mobileTab === 'host' ? styles.activeTab : ''}
-                    onClick={() => setMobileTab('host')}
-                    type='button'
-                >
-                    <Icon type='crown' className={styles.navSvgIcon} />
-                    Host A Server
-                </button>
+                {/* DABBA: Host A Server tab hidden (normal users still see it) */}
+                {!isDabbaUser && (
+                    <button
+                        className={mobileTab === 'host' ? styles.activeTab : ''}
+                        onClick={() => setMobileTab('host')}
+                        type='button'
+                    >
+                        <Icon type='crown' className={styles.navSvgIcon} />
+                        Host A Server
+                    </button>
+                )}
             </div>
 
             {/* ── JOIN / HOST PANELS ── */}
-            <section className={`${styles.panelGrid} ${styles[`show${mobileTab}`]}`}>
+            <section className={`${styles.panelGrid} ${isDabbaUser ? styles.panelGridSingle : ''} ${styles[`show${isDabbaUser ? 'join' : mobileTab}`]}`}>
                 <div className={styles.joinPanel} ref={joinPanelRef}>
                     <JoinServer onRoomsRefreshed={fetchStats} publicMatchEnabled={stats.publicMatchEnabled} />
                 </div>
-                <div className={styles.hostPanel}>
-                    <AddServer publicMatchEnabled={stats.publicMatchEnabled} />
-                </div>
+                {/* DABBA: Host A Server panel hidden (normal users still see it) */}
+                {!isDabbaUser && (
+                    <div className={styles.hostPanel}>
+                        <AddServer publicMatchEnabled={stats.publicMatchEnabled} />
+                    </div>
+                )}
             </section>
 
             {/* ── FEATURE STRIP ── */}

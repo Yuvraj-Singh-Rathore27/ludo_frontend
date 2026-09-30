@@ -64,6 +64,9 @@ const Field = ({ label, icon, error, hint, disabled, suffix, children }) => (
 const ProfilePage = () => {
     const navigate = useNavigate();
     const { authUser, updateProfile } = useAuth();
+    // DABBA launch: the profile is managed in DABBA, so the Edit Profile form is hidden —
+    // only the name / avatar header shows. Normal Ludo users can still edit.
+    const isDabbaUser = !!authUser?.dabaUserId;
 
     /* Support both old {firstName,lastName} and new {displayName} user shapes */
     const [form,    setForm]    = useState({ firstName: '', lastName: '', email: '' });
@@ -177,6 +180,8 @@ const ProfilePage = () => {
                 </div>
 
                 {/* ── BODY: form ── */}
+                {/* DABBA: Edit Profile form hidden (normal users still see it) */}
+                {!isDabbaUser && (
                 <div className={styles.cardBody}>
 
                     <div className={styles.sectionLabel}>
@@ -269,6 +274,7 @@ const ProfilePage = () => {
                         </button>
                     </form>
                 </div>
+                )}
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate }         from 'react-router-dom';
 import { useWallet }           from '../../context/WalletContext';
+import { useAuth }             from '../../context/AuthContext';
 import GlobalNavbar            from '../GlobalNavbar/GlobalNavbar';
 import styles                  from './WalletPage.module.css';
 import logoDice                from '../../images/pages/ludi-profile.webp';
@@ -77,6 +78,11 @@ const PAGINATE_AFTER = 6;
 const WalletPage = () => {
     const navigate = useNavigate();
     const { balance, history, balLoading, histLoading, fetchHistory, deposit, withdraw } = useWallet();
+    const { authUser } = useAuth();
+    // DABBA launch: money is managed in DABBA, so the wallet only shows the balance —
+    // Add Money, Deposit / Withdraw / History tabs and their forms are hidden.
+    // Normal Ludo users keep the full wallet.
+    const isDabbaUser = !!authUser?.dabaUserId;
 
     const [tab,      setTab]      = useState('deposit');
     const [amount,   setAmount]   = useState('');
@@ -189,13 +195,16 @@ const WalletPage = () => {
                                         }
                                     </p>
                                 </div>
-                                <button
-                                    className={styles.addMoneyBtn}
-                                    type='button'
-                                    onClick={() => setTab('deposit')}
-                                >
-                                    + Add Money
-                                </button>
+                                {/* DABBA: Add Money hidden (normal users still see it) */}
+                                {!isDabbaUser && (
+                                    <button
+                                        className={styles.addMoneyBtn}
+                                        type='button'
+                                        onClick={() => setTab('deposit')}
+                                    >
+                                        + Add Money
+                                    </button>
+                                )}
                             </div>
 
                             {/* ── BALANCE BREAKDOWN ── */}
@@ -240,168 +249,172 @@ const WalletPage = () => {
                                 </div>
                             </div>
 
-                            {/* ── TABS ── */}
-                            <div className={styles.tabs}>
-                                {TABS.map(t => (
-                                    <button
-                                        key={t}
-                                        type='button'
-                                        className={`${styles.tabBtn} ${tab === t ? styles.tabBtnActive : ''} ${t === 'deposit' && tab === t ? styles.tabDeposit : ''} ${t === 'withdraw' && tab === t ? styles.tabWithdraw : ''} ${t === 'history' && tab === t ? styles.tabHistory : ''}`}
-                                        onClick={() => { setTab(t); setMsg({ text: '', type: '' }); clearForm(); setHistPage(1); }}
-                                    >
-                                        {t === 'deposit'  && <ArrowDown />}
-                                        {t === 'withdraw' && <ArrowUp />}
-                                        {t === 'history'  && <ClockIcon />}
-                                        <span>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* ── FLASH ── */}
-                            {msg.text && (
-                                <div role='status' className={`${styles.flash} ${msg.type === 'ok' ? styles.flashOk : styles.flashErr}`}>
-                                    {msg.text}
+                            {/* DABBA: Deposit / Withdraw / History tabs and forms hidden — balance only.
+                                Normal users still get the full wallet below. */}
+                            {!isDabbaUser && (<>
+                                {/* ── TABS ── */}
+                                <div className={styles.tabs}>
+                                    {TABS.map(t => (
+                                        <button
+                                            key={t}
+                                            type='button'
+                                            className={`${styles.tabBtn} ${tab === t ? styles.tabBtnActive : ''} ${t === 'deposit' && tab === t ? styles.tabDeposit : ''} ${t === 'withdraw' && tab === t ? styles.tabWithdraw : ''} ${t === 'history' && tab === t ? styles.tabHistory : ''}`}
+                                            onClick={() => { setTab(t); setMsg({ text: '', type: '' }); clearForm(); setHistPage(1); }}
+                                        >
+                                            {t === 'deposit'  && <ArrowDown />}
+                                            {t === 'withdraw' && <ArrowUp />}
+                                            {t === 'history'  && <ClockIcon />}
+                                            <span>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                                        </button>
+                                    ))}
                                 </div>
-                            )}
 
-                            {/* ── DEPOSIT TAB ── */}
-                            {tab === 'deposit' && (
-                                <div className={styles.form}>
-                                    <div className={styles.modeHeader}>
-                                        <span className={`${styles.modeIcon} ${styles.modeIconDeposit}`}><ArrowDown /></span>
-                                        <div>
-                                            <h2>Deposit Funds</h2>
-                                            <p>Add money to your arena balance.</p>
+                                {/* ── FLASH ── */}
+                                {msg.text && (
+                                    <div role='status' className={`${styles.flash} ${msg.type === 'ok' ? styles.flashOk : styles.flashErr}`}>
+                                        {msg.text}
+                                    </div>
+                                )}
+
+                                {/* ── DEPOSIT TAB ── */}
+                                {tab === 'deposit' && (
+                                    <div className={styles.form}>
+                                        <div className={styles.modeHeader}>
+                                            <span className={`${styles.modeIcon} ${styles.modeIconDeposit}`}><ArrowDown /></span>
+                                            <div>
+                                                <h2>Deposit Funds</h2>
+                                                <p>Add money to your arena balance.</p>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>Amount (₹)</label>
-                                        <input className={styles.input} type='number' min='1' placeholder='Enter amount'
-                                            value={amount} onChange={e => setAmount(e.target.value)} />
-                                        <div className={styles.quickAmounts}>
-                                            {QUICK_AMOUNTS.map(q => (
-                                                <button
-                                                    key={q}
-                                                    type='button'
-                                                    className={`${styles.quickBtn} ${amount === String(q) ? styles.quickBtnActive : ''}`}
-                                                    onClick={() => setAmount(String(q))}
-                                                >
-                                                    ₹{q}
-                                                </button>
-                                            ))}
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.label}>Amount (₹)</label>
+                                            <input className={styles.input} type='number' min='1' placeholder='Enter amount'
+                                                value={amount} onChange={e => setAmount(e.target.value)} />
+                                            <div className={styles.quickAmounts}>
+                                                {QUICK_AMOUNTS.map(q => (
+                                                    <button
+                                                        key={q}
+                                                        type='button'
+                                                        className={`${styles.quickBtn} ${amount === String(q) ? styles.quickBtnActive : ''}`}
+                                                        onClick={() => setAmount(String(q))}
+                                                    >
+                                                        ₹{q}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>Payment Gateway</label>
-                                        <input className={styles.input} type='text' placeholder='e.g. Razorpay'
-                                            value={gateway} onChange={e => setGateway(e.target.value)} />
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>Gateway Order ID</label>
-                                        <input className={styles.input} type='text' placeholder='order_xxxxxxxx'
-                                            value={orderId} onChange={e => setOrderId(e.target.value)} />
-                                    </div>
-
-                                    <button type='button' className={`${styles.btn} ${styles.btnDeposit}`} onClick={handleDeposit} disabled={loading}>
-                                        {loading ? <><SpinIcon />Processing…</> : <><span>CONFIRM DEPOSIT</span><span className={styles.btnArrow}>›</span></>}
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* ── WITHDRAW TAB ── */}
-                            {tab === 'withdraw' && (
-                                <div className={styles.form}>
-                                    <div className={styles.modeHeader}>
-                                        <span className={`${styles.modeIcon} ${styles.modeIconWithdraw}`}><ArrowUp /></span>
-                                        <div>
-                                            <h2>Withdraw Funds</h2>
-                                            <p>Request payout to your UPI account.</p>
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.label}>Payment Gateway</label>
+                                            <input className={styles.input} type='text' placeholder='e.g. Razorpay'
+                                                value={gateway} onChange={e => setGateway(e.target.value)} />
                                         </div>
-                                    </div>
 
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>Amount (₹)</label>
-                                        <input className={styles.input} type='number' min='1' placeholder='Enter amount'
-                                            value={amount} onChange={e => setAmount(e.target.value)} />
-                                        <div className={styles.quickAmounts}>
-                                            {QUICK_AMOUNTS.map(q => (
-                                                <button key={q} type='button'
-                                                    className={`${styles.quickBtn} ${amount === String(q) ? styles.quickBtnActive : ''}`}
-                                                    onClick={() => setAmount(String(q))}>
-                                                    ₹{q}
-                                                </button>
-                                            ))}
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.label}>Gateway Order ID</label>
+                                            <input className={styles.input} type='text' placeholder='order_xxxxxxxx'
+                                                value={orderId} onChange={e => setOrderId(e.target.value)} />
                                         </div>
-                                    </div>
 
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>Payment Method</label>
-                                        <div className={styles.methodBadge}>
-                                            <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/></svg>
-                                            UPI — Instant Transfer
+                                        <button type='button' className={`${styles.btn} ${styles.btnDeposit}`} onClick={handleDeposit} disabled={loading}>
+                                            {loading ? <><SpinIcon />Processing…</> : <><span>CONFIRM DEPOSIT</span><span className={styles.btnArrow}>›</span></>}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* ── WITHDRAW TAB ── */}
+                                {tab === 'withdraw' && (
+                                    <div className={styles.form}>
+                                        <div className={styles.modeHeader}>
+                                            <span className={`${styles.modeIcon} ${styles.modeIconWithdraw}`}><ArrowUp /></span>
+                                            <div>
+                                                <h2>Withdraw Funds</h2>
+                                                <p>Request payout to your UPI account.</p>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>UPI ID</label>
-                                        <input className={styles.input} type='text' placeholder='yourname@upi'
-                                            value={upiId} onChange={e => setUpiId(e.target.value)} />
-                                    </div>
-
-                                    <button type='button' className={`${styles.btn} ${styles.btnWithdraw}`} onClick={handleWithdraw} disabled={loading}>
-                                        {loading ? <><SpinIcon />Processing…</> : <><span>REQUEST WITHDRAWAL</span><span className={styles.btnArrow}>›</span></>}
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* ── HISTORY TAB ── */}
-                            {tab === 'history' && (() => {
-                                const totalPages  = Math.max(1, Math.ceil(history.length / PAGE_SIZE));
-                                const safePage    = Math.min(histPage, totalPages);
-                                const pageHistory = history.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-
-                                return (
-                                    <div className={styles.historySection}>
-                                        <div className={styles.historyHeader}>
-                                            <span className={styles.historyTitle}>Transactions</span>
-                                            {!histLoading && history.length > 0 && (
-                                                <span className={styles.historyCount}>{history.length} total</span>
-                                            )}
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.label}>Amount (₹)</label>
+                                            <input className={styles.input} type='number' min='1' placeholder='Enter amount'
+                                                value={amount} onChange={e => setAmount(e.target.value)} />
+                                            <div className={styles.quickAmounts}>
+                                                {QUICK_AMOUNTS.map(q => (
+                                                    <button key={q} type='button'
+                                                        className={`${styles.quickBtn} ${amount === String(q) ? styles.quickBtnActive : ''}`}
+                                                        onClick={() => setAmount(String(q))}>
+                                                        ₹{q}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <div className={styles.historyWrap}>
-                                            {histLoading && (
-                                                <div className={styles.historyEmpty}><SpinIcon /></div>
-                                            )}
-                                            {!histLoading && history.length === 0 && (
-                                                <div className={styles.historyEmpty}>
-                                                    <span className={styles.historyEmptyIcon}><ClockIcon /></span>
-                                                    <p>No transactions yet</p>
+
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.label}>Payment Method</label>
+                                            <div className={styles.methodBadge}>
+                                                <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/></svg>
+                                                UPI — Instant Transfer
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.label}>UPI ID</label>
+                                            <input className={styles.input} type='text' placeholder='yourname@upi'
+                                                value={upiId} onChange={e => setUpiId(e.target.value)} />
+                                        </div>
+
+                                        <button type='button' className={`${styles.btn} ${styles.btnWithdraw}`} onClick={handleWithdraw} disabled={loading}>
+                                            {loading ? <><SpinIcon />Processing…</> : <><span>REQUEST WITHDRAWAL</span><span className={styles.btnArrow}>›</span></>}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* ── HISTORY TAB ── */}
+                                {tab === 'history' && (() => {
+                                    const totalPages  = Math.max(1, Math.ceil(history.length / PAGE_SIZE));
+                                    const safePage    = Math.min(histPage, totalPages);
+                                    const pageHistory = history.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+                                    return (
+                                        <div className={styles.historySection}>
+                                            <div className={styles.historyHeader}>
+                                                <span className={styles.historyTitle}>Transactions</span>
+                                                {!histLoading && history.length > 0 && (
+                                                    <span className={styles.historyCount}>{history.length} total</span>
+                                                )}
+                                            </div>
+                                            <div className={styles.historyWrap}>
+                                                {histLoading && (
+                                                    <div className={styles.historyEmpty}><SpinIcon /></div>
+                                                )}
+                                                {!histLoading && history.length === 0 && (
+                                                    <div className={styles.historyEmpty}>
+                                                        <span className={styles.historyEmptyIcon}><ClockIcon /></span>
+                                                        <p>No transactions yet</p>
+                                                    </div>
+                                                )}
+                                                {!histLoading && pageHistory.map((tx, i) => (
+                                                    <TxRow key={tx.id || tx._id || i} tx={tx} />
+                                                ))}
+                                            </div>
+
+                                            {!histLoading && totalPages > 1 && (
+                                                <div className={styles.pagination}>
+                                                    <button className={styles.pageBtn}
+                                                        onClick={() => setHistPage(p => Math.max(1, p - 1))}
+                                                        disabled={safePage === 1}>← Prev</button>
+                                                    <span className={styles.pageInfo}>
+                                                        Page <strong>{safePage}</strong> of <strong>{totalPages}</strong>
+                                                    </span>
+                                                    <button className={`${styles.pageBtn} ${styles.pageBtnNext}`}
+                                                        onClick={() => setHistPage(p => Math.min(totalPages, p + 1))}
+                                                        disabled={safePage === totalPages}>Next →</button>
                                                 </div>
                                             )}
-                                            {!histLoading && pageHistory.map((tx, i) => (
-                                                <TxRow key={tx.id || tx._id || i} tx={tx} />
-                                            ))}
                                         </div>
-
-                                        {!histLoading && totalPages > 1 && (
-                                            <div className={styles.pagination}>
-                                                <button className={styles.pageBtn}
-                                                    onClick={() => setHistPage(p => Math.max(1, p - 1))}
-                                                    disabled={safePage === 1}>← Prev</button>
-                                                <span className={styles.pageInfo}>
-                                                    Page <strong>{safePage}</strong> of <strong>{totalPages}</strong>
-                                                </span>
-                                                <button className={`${styles.pageBtn} ${styles.pageBtnNext}`}
-                                                    onClick={() => setHistPage(p => Math.min(totalPages, p + 1))}
-                                                    disabled={safePage === totalPages}>Next →</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
+                                    );
+                                })()}
+                            </>)}
 
                         </div>
                     </div>

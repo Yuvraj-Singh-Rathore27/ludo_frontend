@@ -87,6 +87,8 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
     const { launchUser: dabaProfile, clearLaunch } = useLaunch();
     // DABBA profile only for the Ludo user it belongs to; normal Ludo users keep their own data.
     const launchUser = dabaProfile && authUser?.dabaUserId === dabaProfile.userId ? dabaProfile : null;
+    // DABBA launch: session is owned by DABBA, so the Logout buttons are hidden for them.
+    const isDabbaUser = !!authUser?.dabaUserId;
     const { balance, fetchBalance } = useWallet();
     const { muted, toggleMute } = useAudioSettings();
     const navigate = useNavigate();
@@ -195,18 +197,22 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
 
     return (
         <>
-            <header className={styles.topbar}>
-                <button
-                    ref={menuButtonRef}
-                    className={`${styles.menuButton} ${menuOpen ? styles.menuButtonOpen : ''}`}
-                    type='button'
-                    aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-                    aria-expanded={menuOpen}
-                    aria-controls='global-side-drawer'
-                    onClick={handleMenuToggle}
-                >
-                    <span /><span /><span />
-                </button>
+            <header className={`${styles.topbar} ${isDabbaUser ? styles.topbarNoMenu : ''}`}>
+                {/* DABBA: hamburger menu (side drawer) hidden — simple header only.
+                    Normal users still see it. */}
+                {!isDabbaUser && (
+                    <button
+                        ref={menuButtonRef}
+                        className={`${styles.menuButton} ${menuOpen ? styles.menuButtonOpen : ''}`}
+                        type='button'
+                        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={menuOpen}
+                        aria-controls='global-side-drawer'
+                        onClick={handleMenuToggle}
+                    >
+                        <span /><span /><span />
+                    </button>
+                )}
 
                 <div className={styles.brandRow}>
                     <div className={styles.logoWrap}>
@@ -227,10 +233,13 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                         <NavIcon type='trophy' className={styles.navLinkIcon} />
                         <span>Leaderboard</span>
                     </Link>
-                    <Link className={activePage === 'history' ? styles.active : ''} to='/history'>
-                        <NavIcon type='history' className={styles.navLinkIcon} />
-                        <span>History</span>
-                    </Link>
+                    {/* DABBA: History link hidden (normal users still see it) */}
+                    {!isDabbaUser && (
+                        <Link className={activePage === 'history' ? styles.active : ''} to='/history'>
+                            <NavIcon type='history' className={styles.navLinkIcon} />
+                            <span>History</span>
+                        </Link>
+                    )}
                 </nav>
 
                 <div className={styles.wallet}>
@@ -318,28 +327,38 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                             {mobile && <span>{mobile}</span>}
                         </div>
                     </div>
-                    <hr className={styles.dropdownDivider} />
-                    <Link to='/profile' className={styles.dropdownProfile} onClick={() => setProfileOpen(false)}>
-                        <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
-                            <circle cx='12' cy='8' r='4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
-                            <path d='M4 20c0-4 3.6-7 8-7s8 3 8 7' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
-                        </svg>
-                        Profile
-                    </Link>
-                    <hr className={styles.dropdownDivider} />
-                    <button className={styles.dropdownLogout} type='button' onClick={handleLogout}>
-                        <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
-                            <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
-                            <polyline points='16 17 21 12 16 7' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
-                            <line x1='21' y1='12' x2='9' y2='12' strokeWidth='2' strokeLinecap='round' stroke='currentColor' />
-                        </svg>
-                        Logout
-                    </button>
+                    {/* DABBA: Profile link hidden — they only play and exit (normal users still see it) */}
+                    {!isDabbaUser && (
+                        <>
+                            <hr className={styles.dropdownDivider} />
+                            <Link to='/profile' className={styles.dropdownProfile} onClick={() => setProfileOpen(false)}>
+                                <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
+                                    <circle cx='12' cy='8' r='4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
+                                    <path d='M4 20c0-4 3.6-7 8-7s8 3 8 7' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
+                                </svg>
+                                Profile
+                            </Link>
+                        </>
+                    )}
+                    {/* DABBA: Logout hidden (normal users still see it) */}
+                    {!isDabbaUser && (
+                        <>
+                            <hr className={styles.dropdownDivider} />
+                            <button className={styles.dropdownLogout} type='button' onClick={handleLogout}>
+                                <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
+                                    <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
+                                    <polyline points='16 17 21 12 16 7' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
+                                    <line x1='21' y1='12' x2='9' y2='12' strokeWidth='2' strokeLinecap='round' stroke='currentColor' />
+                                </svg>
+                                Logout
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
 
             {/* ── MOBILE SIDE DRAWER ── */}
-            {menuOpen && (
+            {menuOpen && !isDabbaUser && (
                 <>
                     <div
                         className={styles.drawerBackdrop}
@@ -407,16 +426,19 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                             </button>
                         </nav>
 
-                        <div className={styles.drawerFooter}>
-                            <button className={styles.drawerLogout} type='button' onClick={handleLogout}>
-                                <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
-                                    <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
-                                    <polyline points='16 17 21 12 16 7' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
-                                    <line x1='21' y1='12' x2='9' y2='12' strokeWidth='2' strokeLinecap='round' stroke='currentColor' />
-                                </svg>
-                                Logout
-                            </button>
-                        </div>
+                        {/* DABBA: Logout hidden (normal users still see it) */}
+                        {!isDabbaUser && (
+                            <div className={styles.drawerFooter}>
+                                <button className={styles.drawerLogout} type='button' onClick={handleLogout}>
+                                    <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
+                                        <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
+                                        <polyline points='16 17 21 12 16 7' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' />
+                                        <line x1='21' y1='12' x2='9' y2='12' strokeWidth='2' strokeLinecap='round' stroke='currentColor' />
+                                    </svg>
+                                    Logout
+                                </button>
+                            </div>
+                        )}
                     </aside>
                 </>
             )}
@@ -431,10 +453,13 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                     <NavIcon type='trophy' className={styles.bottomIcon} />
                     <span>Leaderboard</span>
                 </Link>
-                <Link className={activePage === 'history' ? styles.bottomActive : ''} to='/history'>
-                    <NavIcon type='history' className={styles.bottomIcon} />
-                    <span>History</span>
-                </Link>
+                {/* DABBA: History tab hidden (normal users still see it) */}
+                {!isDabbaUser && (
+                    <Link className={activePage === 'history' ? styles.bottomActive : ''} to='/history'>
+                        <NavIcon type='history' className={styles.bottomIcon} />
+                        <span>History</span>
+                    </Link>
+                )}
                 <Link className={activePage === 'wallet' ? styles.bottomActive : ''} to='/wallet'>
                     <svg className={styles.bottomIcon} viewBox='0 0 48 48' fill='none' aria-hidden='true'>
                         <rect x='6' y='12' width='36' height='26' rx='4' stroke='currentColor' strokeWidth='3.2'/>

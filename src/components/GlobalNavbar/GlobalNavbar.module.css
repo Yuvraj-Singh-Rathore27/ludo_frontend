@@ -1251,3 +1251,10 @@
         padding-right: max(clamp(14px, 2vw, 28px), env(safe-area-inset-right, 0px));
     }
 }
+
+/* DABBA launch: no hamburger menu, so the mobile header is just brand + wallet. */
+@media (max-width: 900px) {
+    .topbar.topbarNoMenu {
+        grid-template-columns: 1fr auto;
+    }
+}

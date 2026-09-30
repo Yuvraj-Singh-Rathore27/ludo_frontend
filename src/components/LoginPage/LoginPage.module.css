@@ -1934,3 +1934,12 @@
         gap: 4px;
     }
 }
+
+/* DABBA launch: only the Join panel is shown, so it takes the full row / tab strip. */
+.panelGrid.panelGridSingle {
+    grid-template-columns: 1fr;
+}
+
+.mobileTabs.mobileTabsSingle {
+    grid-template-columns: 1fr;
+}
