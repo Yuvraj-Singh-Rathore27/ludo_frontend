@@ -31,9 +31,10 @@ const RETURN_REFRESH_MIN_MS = 5000;
 // its implementation is kept, just hidden from players). publicMatchEnabled comes from
 // the backend (via LoginPage's /api/v1/stats poll), never hard-coded here, so enabling
 // it again later needs no frontend change.
-// matches lists EVERY current match of an entry fee (joinable and full alike); only the
+// matches lists only joinable matches now (full / playing ones are hidden by the backend); only the
 // joinable ones count as open.
 const openCount = pool => (pool.matches || []).filter(m => m.joinable).length;
+// eslint-disable-next-line no-unused-vars -- "Filled" stat hidden (see poolStats below)
 const filledCount = pool => (pool.matches || []).filter(m => !m.joinable).length;
 const waitingCount = pool => (pool.matches || []).filter(m => m.joinable).reduce((n, m) => n + m.joinedPlayers, 0);
 
@@ -44,6 +45,9 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     // DABBA launch: only Quick Match is shown (join-by-Code hidden) and the panel is titled
     // "Join Room". Normal Ludo users keep every tab.
     const isDabbaUser = !!authUser?.dabaUserId;
+    // Client change: DABBA players can join private rooms by code again, same as normal
+    // users. Set back to isDabbaUser to hide the Code tab for them again.
+    const hideCodeTab = false; // was: isDabbaUser
     // Quick Match (the Pools tab) is the default/primary way to play now — Public Match,
     // when enabled, is an extra option rather than the first thing a player sees.
     const [tab, setTab] = useState('pools');
@@ -56,8 +60,8 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
 
     // DABBA: the Code tab doesn't exist for them — never leave it active.
     useEffect(() => {
-        if (tab === 'code' && isDabbaUser) setTab('pools');
-    }, [tab, isDabbaUser]);
+        if (tab === 'code' && hideCodeTab) setTab('pools');
+    }, [tab, hideCodeTab]);
 
     /* ── Public rooms ─────────────────────────────────────────────────── */
     const [rooms, setRooms]     = useState([]);
@@ -320,7 +324,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                             ⚡ Quick Match
                         </button>
                         {/* DABBA: Code tab hidden (normal users still see it) */}
-                        {!isDabbaUser && (
+                        {!hideCodeTab && (
                             <button type='button'
                                 className={`${styles.tabBtn} ${tab === 'code' ? styles.tabActive : ''}`}
                                 onClick={() => setTab('code')}>
@@ -387,10 +391,12 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                                                 <span className={styles.poolStatValue}>{openCount(selectedPool)}</span>
                                                 <span className={styles.poolStatLabel}>Open</span>
                                             </div>
+                                            {/* Client requirement: full / playing matches are no longer sent
+                                                to the lobby (backend listActivePools), so "Filled" would always be 0.
                                             <div className={styles.poolStat}>
                                                 <span className={styles.poolStatValue}>{filledCount(selectedPool)}</span>
                                                 <span className={styles.poolStatLabel}>Filled</span>
-                                            </div>
+                                            </div> */}
                                             <div className={styles.poolStat}>
                                                 <span className={styles.poolStatValue}>
                                                     {waitingCount(selectedPool)}/{openCount(selectedPool) * selectedPool.maxPlayers}
@@ -463,7 +469,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                     )}
 
                     {/* ── Join by Code ── */}
-                    {tab === 'code' && !isDabbaUser && (
+                    {tab === 'code' && !hideCodeTab && (
                         <form className={styles.codeForm} onSubmit={handleJoinByCode}>
                             <p className={styles.codeHint}>
                                 Ask the room host for their 6-letter private room code

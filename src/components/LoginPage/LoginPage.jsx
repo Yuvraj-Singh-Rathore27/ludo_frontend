@@ -160,6 +160,9 @@ const LoginPage = () => {
     // DABBA launch (dabaUserId is set only by the DABBA login): Quick Match + Join Room only —
     // Host A Server and join-by-Code are hidden. Normal Ludo users keep the full lobby.
     const isDabbaUser = !!authUser?.dabaUserId;
+    // Client change: DABBA players can create private rooms again, same as normal users.
+    // Set back to isDabbaUser to hide Host A Server for them again.
+    const hideHostAndCode = false; // was: isDabbaUser
 
     const fetchStats = useCallback(async (signal) => {
         try {
@@ -373,7 +376,7 @@ const LoginPage = () => {
             </button>
 
             {/* ── MOBILE TABS (hidden on desktop) ── */}
-            <div className={`${styles.mobileTabs} ${isDabbaUser ? styles.mobileTabsSingle : ''}`}>
+            <div className={`${styles.mobileTabs} ${hideHostAndCode ? styles.mobileTabsSingle : ''}`}>
                 <button
                     className={mobileTab === 'join' ? styles.activeTab : ''}
                     onClick={() => setMobileTab('join')}
@@ -384,7 +387,7 @@ const LoginPage = () => {
                     {isDabbaUser ? 'Join Room' : 'Join A Server'}
                 </button>
                 {/* DABBA: Host A Server tab hidden (normal users still see it) */}
-                {!isDabbaUser && (
+                {!hideHostAndCode && (
                     <button
                         className={mobileTab === 'host' ? styles.activeTab : ''}
                         onClick={() => setMobileTab('host')}
@@ -397,12 +400,12 @@ const LoginPage = () => {
             </div>
 
             {/* ── JOIN / HOST PANELS ── */}
-            <section className={`${styles.panelGrid} ${isDabbaUser ? styles.panelGridSingle : ''} ${styles[`show${isDabbaUser ? 'join' : mobileTab}`]}`}>
+            <section className={`${styles.panelGrid} ${hideHostAndCode ? styles.panelGridSingle : ''} ${styles[`show${hideHostAndCode ? 'join' : mobileTab}`]}`}>
                 <div className={styles.joinPanel} ref={joinPanelRef}>
                     <JoinServer onRoomsRefreshed={fetchStats} publicMatchEnabled={stats.publicMatchEnabled} />
                 </div>
                 {/* DABBA: Host A Server panel hidden (normal users still see it) */}
-                {!isDabbaUser && (
+                {!hideHostAndCode && (
                     <div className={styles.hostPanel}>
                         <AddServer publicMatchEnabled={stats.publicMatchEnabled} />
                     </div>

@@ -490,3 +490,10 @@
         order: -1;
     }
 }
+
+/* DABBA launch: no bottom bar, so drop the space reserved for it. */
+@media (max-width: 900px) {
+    .page.dabbaPage .body {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+}

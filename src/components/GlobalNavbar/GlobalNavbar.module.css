@@ -1258,3 +1258,20 @@
         grid-template-columns: 1fr auto;
     }
 }
+
+/* DABBA launch: Match History icon in the header — mobile only (desktop uses the top nav). */
+.historyHeaderBtn {
+    display: none;
+    text-decoration: none;
+}
+
+.historyHeaderBtnActive {
+    border-color: rgba(255, 181, 31, 0.8);
+    color: #ffb51f;
+}
+
+@media (max-width: 900px) {
+    .soundToggle.historyHeaderBtn {
+        display: flex;
+    }
+}

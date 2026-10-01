@@ -248,16 +248,27 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                         <NavIcon type='trophy' className={styles.navLinkIcon} />
                         <span>Leaderboard</span>
                     </Link>
-                    {/* DABBA: History link hidden (normal users still see it) */}
-                    {!isDabbaUser && (
-                        <Link className={activePage === 'history' ? styles.active : ''} to='/history'>
-                            <NavIcon type='history' className={styles.navLinkIcon} />
-                            <span>History</span>
-                        </Link>
-                    )}
+                    {/* Client change: DABBA players see Match History again (was hidden with
+                        {!isDabbaUser && ( ... )}). */}
+                    <Link className={activePage === 'history' ? styles.active : ''} to='/history'>
+                        <NavIcon type='history' className={styles.navLinkIcon} />
+                        <span>History</span>
+                    </Link>
                 </nav>
 
                 <div className={styles.wallet}>
+                    {/* DABBA, mobile only: no bottom bar for them, so Match History is a
+                        small icon in the header (hidden on desktop, where the top nav has it). */}
+                    {isDabbaUser && (
+                        <Link
+                            to='/history'
+                            className={`${styles.soundToggle} ${styles.historyHeaderBtn} ${activePage === 'history' ? styles.historyHeaderBtnActive : ''}`}
+                            aria-label='Match history'
+                            title='Match history'
+                        >
+                            <NavIcon type='history' />
+                        </Link>
+                    )}
                     <button
                         className={styles.soundToggle}
                         type='button'

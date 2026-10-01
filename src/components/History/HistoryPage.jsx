@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import GlobalNavbar from '../GlobalNavbar/GlobalNavbar';
+import { useAuth } from '../../context/AuthContext';
 import styles from './HistoryPage.module.css';
 
 const SpinIcon = () => (
@@ -75,6 +76,9 @@ const MatchRow = ({ match }) => {
 };
 
 const HistoryPage = () => {
+    // DABBA launch: no bottom bar, so no bottom space is reserved for it (see .dabbaPage).
+    const { authUser } = useAuth();
+    const isDabbaUser = !!authUser?.dabaUserId;
     const navigate = useNavigate();
     const [matches, setMatches] = useState([]);
     const [total, setTotal] = useState(0);
@@ -119,7 +123,7 @@ const HistoryPage = () => {
     const totalProfit = matches.reduce((acc, m) => acc + parseFloat(m.profit || 0), 0);
 
     return (
-        <div className={styles.page}>
+        <div className={`${styles.page} ${isDabbaUser ? styles.dabbaPage : ''}`}>
             <GlobalNavbar activePage='history' />
 
             <main className={styles.body}>
