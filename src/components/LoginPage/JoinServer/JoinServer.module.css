@@ -448,3 +448,33 @@
         max-height: max(230px, calc(100dvh - 420px));
     }
 }
+
+/* Persistent join error (e.g. insufficient balance) — see JoinErrorBanner. */
+.joinErrorBanner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 4px 0 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 60, 80, 0.45);
+    border-radius: 8px;
+    background: rgba(255, 24, 58, 0.12);
+    color: #ff6b7a;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.joinErrorBanner button {
+    flex: 0 0 auto;
+    min-height: 0;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}

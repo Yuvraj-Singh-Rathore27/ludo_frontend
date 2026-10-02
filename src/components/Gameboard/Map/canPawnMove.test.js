@@ -49,6 +49,11 @@ describe('canPawnMove — opponent blocks (mirrors backend isOpponentBlock / isP
         expect(canPawnMove(near, 4, [near, ...blueBlock(24)])).toBe(true); // 24 is a safe star
     });
 
+    it('passes over a safe square holding two same-colour opponents', () => {
+        // 20 -> 26 walks over the star at 24; a stack on a safe square is never a block.
+        expect(canPawnMove(red, 6, [red, ...blueBlock(24)])).toBe(true);
+    });
+
     it('a pawn leaving base is not path-checked', () => {
         const home = pawn('r5', 'red', 3, 3);
         expect(canPawnMove(home, 6, [home, ...blueBlock(17)])).toBe(true);

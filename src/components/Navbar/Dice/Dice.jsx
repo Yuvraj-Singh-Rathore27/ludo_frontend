@@ -82,7 +82,15 @@ const DiceCube = ({ phase, landTransform }) => (
 // still the current one, so resetting (bumping the id) instantly and safely
 // invalidates any timers still in flight. This is what makes the sequence
 // robust regardless of how fast the server responds or passes the turn.
-const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'card', labelSide = 'below' }) => {
+const Dice = ({
+    rolledNumber,
+    nowMoving,
+    playerColor,
+    movingPlayer,
+    variant = 'card',
+    labelSide = 'below',
+    onRollRequested,
+}) => {
     const socket = useContext(SocketContext);
     const roomId = useContext(PlayerDataContext)?.roomId;
     // 'idle' | 'spinning' | 'landing' | 'landed' | 'noMove'
@@ -183,8 +191,11 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
         // this component only ever displays whatever number it sends back.
         // The room code rides along so the roll still lands after a reconnect that
         // lost the server-side session (the server verifies the seat either way).
+        // onRollRequested lets the board tell a roll this player made from one the
+        // server made for them on timeout (only the former may auto-move a token).
+        onRollRequested?.();
         socket?.emit('game:roll', roomId);
-    }, [socket, roomId, setPhaseSafe, after, resetToIdle]);
+    }, [socket, roomId, setPhaseSafe, after, resetToIdle, onRollRequested]);
 
     const isCurrentPlayer = movingPlayer === playerColor;
     const hasRolledNumber = rolledNumber !== null && rolledNumber !== undefined;
@@ -220,14 +231,17 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
             after(LANDING_MS, myId, () => {
                 setPhaseSafe('landed');
 
+                if (hasRolledNumberRef.current) {
+                    // The result is on screen and the roll is still live: a legal move
+                    // exists. Tokens become pickable from this moment, so from here a
+                    // cleared roll means "moved" (reset below), never "no move".
+                    awaitingMoveRef.current = true;
+                    return;
+                }
+
                 after(RESULT_HOLD_MS, myId, () => {
-                    if (hasRolledNumberRef.current) {
-                        // A legal move exists — server hasn't cleared the roll, so just
-                        // wait for the player to actually pick a pawn on the board.
-                        awaitingMoveRef.current = true;
-                        return;
-                    }
-                    // No legal move — the server already passed the turn. Say so briefly.
+                    // The server cleared the roll before the dice even landed: there was
+                    // no legal move and the turn already passed. Say so briefly.
                     setPhaseSafe('noMove');
                     after(NO_MOVE_HOLD_MS, myId, resetToIdle);
                 });
@@ -266,9 +280,11 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
             <div className={`${styles.container} ${styles.dockContainer}`}>
                 <img
                     className={styles.dockIdleDie}
-                    // No roll to show → the neutral "roll" image, never a die face:
-                    // images[5] is the 6 face and used to flash here after every move.
-                    src={hasRolledNumber ? images[rolledNumber - 1] : images[ROLL_IMAGE_INDEX]}
+                    // Always the neutral "roll" image, never a die face. This view only
+                    // shows while nothing is animating, so a face here was either stale
+                    // (images[5], the 6 face, used to flash after every move) or a new
+                    // result painted for one frame before its spin started.
+                    src={images[ROLL_IMAGE_INDEX]}
                     alt=''
                 />
             </div>
@@ -320,5 +336,14 @@ const Dice = ({ rolledNumber, nowMoving, playerColor, movingPlayer, variant = 'c
         </div>
     );
 };
+
+// An invisible stand-in with exactly the dock dice's footprint (same classes, so the
+// sizes stay in step at every breakpoint). Player badges hold it while someone else has
+// the dice, so a badge never changes size as the dice moves between corners.
+export const DiceSlot = () => (
+    <div className={`${styles.container} ${styles.dockContainer} ${styles.slot}`} aria-hidden='true'>
+        <span />
+    </div>
+);
 
 export default React.memo(Dice);

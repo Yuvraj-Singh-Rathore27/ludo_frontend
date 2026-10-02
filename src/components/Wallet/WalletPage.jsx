@@ -3,6 +3,7 @@ import { useNavigate }         from 'react-router-dom';
 import { useWallet }           from '../../context/WalletContext';
 import { useAuth }             from '../../context/AuthContext';
 import GlobalNavbar            from '../GlobalNavbar/GlobalNavbar';
+import BackToHome             from '../BackToHome/BackToHome';
 import styles                  from './WalletPage.module.css';
 import logoDice                from '../../images/pages/ludi-profile.webp';
 import heroBoard               from '../../images/pages/login-ludo-hero-clean.webp';
@@ -147,6 +148,9 @@ const WalletPage = () => {
             <GlobalNavbar activePage='wallet' />
 
             <div className={styles.page}>
+                <div className={styles.backRow}>
+                    <BackToHome />
+                </div>
                 <div className={styles.shell}>
 
                     {/* ── LEFT VISUAL PANEL ── */}

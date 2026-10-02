@@ -11,7 +11,7 @@ const NameContainer = ({ player, time }) => {
     } ${isEmptySeat ? styles.empty : ''}`;
 
     return (
-        <div className={classes} style={{ '--player-color': player.color }}>
+        <div className={classes} style={{ '--player-color': player.color }} title={isEmptySeat ? undefined : player.name}>
             <p className={isEmptySeat ? styles.emptySeatName : ''}>{displayName}</p>
             {player.nowMoving ? <AnimatedOverlay time={time} /> : null}
         </div>

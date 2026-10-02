@@ -386,3 +386,19 @@ body {
         font-size: 18px;
     }
 }
+
+/* While the game board is on screen the page itself must not scroll: #root is
+   min-height 100vh (the large viewport), taller than the 100dvh board on mobile
+   browsers with a collapsing toolbar, so a tap on the dice could drag the whole
+   page. Toggled by Gameboard only while the board is mounted — every other page
+   keeps its normal scrolling. Small screens still scroll inside .gameFrame. */
+html.gameScreenLock,
+html.gameScreenLock body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+html.gameScreenLock #root {
+    min-height: 0;
+}

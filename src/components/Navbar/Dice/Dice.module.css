@@ -30,6 +30,11 @@
     filter: blur(10px);
 }
 
+/* Size-only placeholder (see DiceSlot in Dice.jsx) — takes the dock's space, shows nothing. */
+.slot {
+    visibility: hidden;
+}
+
 .resultDie,
 .rollButton,
 .dockIdleDie {

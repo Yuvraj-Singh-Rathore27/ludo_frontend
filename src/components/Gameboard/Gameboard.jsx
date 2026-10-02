@@ -7,14 +7,14 @@ import useSocketData from '../../hooks/useSocketData';
 import Map from './Map/Map';
 import NameContainer from '../Navbar/NameContainer/NameContainer';
 import ReadyButton from '../Navbar/ReadyButton/ReadyButton';
-import Dice from '../Navbar/Dice/Dice';
+import Dice, { DiceSlot } from '../Navbar/Dice/Dice';
 import Overlay from '../Overlay/Overlay';
 import styles from './Gameboard.module.css';
 import trophyImage from '../../images/trophy.webp';
 import logoDice from '../../images/pages/ludi-profile.webp';
 import homeSound from '../../images/dice/dice.mp3';
 import { getLocalPerspective } from './perspective';
-import { MAX_ROLL_ANIMATION_MS } from '../Navbar/Dice/diceTiming';
+import { MAX_ROLL_ANIMATION_MS, MIN_SPIN_MS, LANDING_MS } from '../Navbar/Dice/diceTiming';
 
 // Maps a *visual* board corner (post-perspective-rotation) to which side of
 // the dice the "Roll Dice" label sits on, and to the badge's own CSS class —
@@ -488,6 +488,43 @@ const Gameboard = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rolledNumber]);
     useEffect(() => () => { if (pinTimeoutRef.current) clearTimeout(pinTimeoutRef.current); }, []);
+
+    // Tokens only become pickable once the dice has landed and shows its value — the
+    // required order is roll → dice lands → result shown → token moves → capture. A tap
+    // (or the one-legal-pawn auto-move) used to be accepted the instant the result
+    // arrived, so the token, and any capture, ran while the dice was still spinning.
+    // `pickableRoll` is the roll the board may act on; null until the dice has landed.
+    const [pickableRoll, setPickableRoll] = useState(null);
+    // Whether the current roll is one this player made themselves (tapped the dice). The
+    // board only auto-moves a single legal pawn for such a roll: a roll the server made
+    // for an absent player stays the server's to play, so that turn still counts as
+    // missed (see the server's consecutive auto-turn limit).
+    const selfRollRequestedRef = useRef(false);
+    const [rollIsMine, setRollIsMine] = useState(false);
+    const handleRollRequested = useCallback(() => {
+        selfRollRequestedRef.current = true;
+    }, []);
+    useEffect(() => {
+        setPickableRoll(null);
+        if (rolledNumber === null || rolledNumber === undefined) {
+            setRollIsMine(false);
+            return undefined;
+        }
+        setRollIsMine(selfRollRequestedRef.current);
+        selfRollRequestedRef.current = false;
+        // The dice's own spin + landing never takes longer than this from the moment
+        // the result arrives (Dice.jsx shortens its spin by however long it already ran).
+        const id = setTimeout(() => setPickableRoll(rolledNumber), MIN_SPIN_MS + LANDING_MS);
+        return () => clearTimeout(id);
+    }, [rolledNumber]);
+    useEffect(() => {
+        if (!socket) return undefined;
+        const onRejected = () => {
+            selfRollRequestedRef.current = false;
+        };
+        socket.on('game:roll_rejected', onRejected);
+        return () => socket.off('game:roll_rejected', onRejected);
+    }, [socket]);
     
     // Turn countdown. `time` is the server's absolute deadline (epoch ms, from
     // room.nextMoveTime) — AnimatedOverlay depends on that, so it is never mutated
@@ -576,6 +613,9 @@ const Gameboard = () => {
 
     // Exit overlay — shown after clicking EXIT; hides when winner declared or player reconnects
     const [showExitOverlay, setShowExitOverlay] = useState(false);
+    // Set when the server removed THIS player from the match ('inactivity' = too many
+    // timed-out turns in a row, 'forfeit', 'disconnect_timeout').
+    const [selfEliminated, setSelfEliminated] = useState(null);
     // "Leave match?" confirmation shown before Exit does anything during a live match
     const [confirmExit, setConfirmExit] = useState(false);
     const [exitSecondsLeft, setExitSecondsLeft] = useState(EXIT_SECONDS);
@@ -671,14 +711,20 @@ const Gameboard = () => {
     // Keep ref in sync so closures (handleWinner, onRoomData) can check current value
     useEffect(() => { gameStartedRef.current = gameStarted; }, [gameStarted]);
 
+    // Several joins in a row each trigger a fetch; responses can come back out of order,
+    // and an older one (say 2/4) landing after a newer one (3/4) made the count jump
+    // around. Only the most recently issued request may update the screen.
+    const roomInfoSeqRef = useRef(0);
     const fetchRoomInfo = useCallback(async () => {
         if (!context?.roomId) return;
         const token = localStorage.getItem('ludo_token');
         if (!token) return;
+        const seq = ++roomInfoSeqRef.current;
         try {
             const res = await axios.get(`/api/v1/rooms/${context.roomId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            if (seq !== roomInfoSeqRef.current) return; // a newer request superseded this one
             setRoomInfo(res.data?.data || null);
         } catch (err) {
             // The room no longer exists, yet a saved session sent this browser here: drop it
@@ -704,6 +750,21 @@ const Gameboard = () => {
         if (!roomSocket || gameStarted) return;
         const refresh = () => fetchRoomInfo();
 
+        // The join event already carries the server's committed seat count — show it at
+        // once (1/4 -> 2/4 -> 3/4 -> 4/4 as each join lands) instead of waiting for the
+        // follow-up fetch, which only arrived after the match had already started when
+        // seats filled in quick succession. The fetch still refreshes the player list.
+        const onPlayerJoined = data => {
+            if (Number.isInteger(data?.joinedPlayers)) {
+                setRoomInfo(prev =>
+                    prev
+                        ? { ...prev, joinedPlayers: data.joinedPlayers, maxPlayers: data.maxPlayers ?? prev.maxPlayers }
+                        : prev
+                );
+            }
+            fetchRoomInfo();
+        };
+
         // When all players have joined, aggressively re-assert socket room subscription.
         // The host can start the game immediately after room:ready fires; if this socket
         // isn't in the Fastify room at that moment it will miss room:started.
@@ -718,11 +779,11 @@ const Gameboard = () => {
             }
         };
 
-        roomSocket.on('room:player_joined', refresh);
+        roomSocket.on('room:player_joined', onPlayerJoined);
         roomSocket.on('room:player_left', refresh);
         roomSocket.on('room:ready', onReady);
         return () => {
-            roomSocket.off('room:player_joined', refresh);
+            roomSocket.off('room:player_joined', onPlayerJoined);
             roomSocket.off('room:player_left', refresh);
             roomSocket.off('room:ready', onReady);
         };
@@ -948,10 +1009,22 @@ const Gameboard = () => {
             pushNotif(`${playerName} reconnected!`, 'success');
         };
 
-        const onPlayerEliminated = ({ playerId, playerName }) => {
+        const onPlayerEliminated = ({ playerId, playerName, reason }) => {
             setPlayerStatuses(prev => ({ ...prev, [playerId]: 'ELIMINATED' }));
             clearCountdown(playerId);
-            pushNotif(`${playerName} has been eliminated from the match.`, 'error', 7000);
+            if (playerId && playerId === authUser?.id) {
+                // This player was removed — say why instead of leaving them on a board
+                // that no longer gives them turns.
+                setSelfEliminated(reason || 'eliminated');
+                return;
+            }
+            pushNotif(
+                reason === 'inactivity'
+                    ? `${playerName} missed too many turns and was removed from the match.`
+                    : `${playerName} has been eliminated from the match.`,
+                'error',
+                7000
+            );
         };
 
         const onResults = ({ rankings }) => {
@@ -1180,6 +1253,16 @@ const Gameboard = () => {
         return () => clearInterval(id);
     }, [gameStarted, socket, pawns.length, context?.roomId, authUser?.id, context?.color]);
 
+    // Lock page-level scrolling only while the board itself is on screen (see
+    // html.gameScreenLock in index.css); the waiting room and every other page keep
+    // their normal scrolling, and the lock is always removed on the way out.
+    const boardVisible = pawns.length === 16;
+    useEffect(() => {
+        if (!boardVisible) return undefined;
+        document.documentElement.classList.add('gameScreenLock');
+        return () => document.documentElement.classList.remove('gameScreenLock');
+    }, [boardVisible]);
+
     const myColor = gameStartData?.players?.find(p => p.userId === authUser?.id)?.color || context?.color;
     const totalPool =
         gameStartData?.totalPool ||
@@ -1196,7 +1279,7 @@ const Gameboard = () => {
 
     return (
         <>
-            {pawns.length === 16 ? (
+            {boardVisible ? (
                 <main className={styles.gameShell}>
                     <div className={styles.ambientLayer} aria-hidden='true'>
                         <span></span>
@@ -1333,12 +1416,12 @@ const Gameboard = () => {
                             <section className={styles.boardGrid}>
                                 <div
                                     className={`${styles.boardPanel} ${nowMoving ? styles.yourTurnBoard : ''} ${
-                                        nowMoving && rolledNumber ? styles.pickPawnBoard : ''
+                                        nowMoving && pickableRoll ? styles.pickPawnBoard : ''
                                     }`}
                                 >
                                     {nowMoving ? (
                                         <div className={styles.turnPrompt}>
-                                            {rolledNumber ? 'Pick a pawn' : 'Roll the dice'}
+                                            {pickableRoll ? 'Pick a pawn' : rolledNumber ? 'Rolling…' : 'Roll the dice'}
                                         </div>
                                     ) : null}
                                     {players
@@ -1367,8 +1450,12 @@ const Gameboard = () => {
                                                         {isSelf ? <span className={styles.playerBadgeYou}>You</span> : null}
                                                         {hasReadyAction ? <ReadyButton isReady={isReady} /> : null}
                                                     </div>
-                                                    {hasDice ? (
-                                                        <div className={styles.playerBadgeDice}>
+                                                    {/* Every badge keeps a dice-sized slot, filled only for the
+                                                        player holding the dice: the badge's size — and so the
+                                                        board's scrollable area on small screens — no longer
+                                                        changes as the dice moves between corners. */}
+                                                    <div className={styles.playerBadgeDice}>
+                                                        {hasDice ? (
                                                             <Dice
                                                                 variant='dock'
                                                                 rolledNumber={rolledNumber}
@@ -1376,23 +1463,43 @@ const Gameboard = () => {
                                                                 movingPlayer={diceMover}
                                                                 playerColor={diceMover}
                                                                 labelSide={CORNER_LABEL_SIDE[corner]}
+                                                                onRollRequested={handleRollRequested}
                                                             />
-                                                        </div>
-                                                    ) : null}
+                                                        ) : (
+                                                            <DiceSlot />
+                                                        )}
+                                                    </div>
+                                                    {/* Full username (not just its initial) so every seat
+                                                        is distinguishable; ellipsised to the badge width. */}
+                                                    <span
+                                                        className={`${styles.playerBadgeName} ${p.exited ? styles.playerBadgeLeft : ''}`}
+                                                        title={p.name}
+                                                    >
+                                                        {p.exited ? `${p.name} · left` : p.name}
+                                                    </span>
                                                 </div>
                                             );
                                         })}
-                                    <Map pawns={pawns} nowMoving={nowMoving} rolledNumber={rolledNumber} />
+                                    <Map
+                                        pawns={pawns}
+                                        nowMoving={nowMoving}
+                                        rolledNumber={pickableRoll}
+                                        autoMoveEnabled={rollIsMine}
+                                    />
                                 </div>
                             </section>
 
                             <section className={styles.actionDock} aria-label='Game actions'>
-                                {nowMoving && secondsLeft !== null && (
-                                    <div className={styles.turnTimer}>
-                                        <span>Your Turn</span>
-                                        <strong>{secondsLeft}s</strong>
-                                    </div>
-                                )}
+                                {/* Always rendered (hidden when it isn't this player's turn) so
+                                    the layout doesn't grow and shrink with every turn change. */}
+                                <div
+                                    className={styles.turnTimer}
+                                    style={nowMoving && secondsLeft !== null ? undefined : { visibility: 'hidden' }}
+                                    aria-hidden={!(nowMoving && secondsLeft !== null)}
+                                >
+                                    <span>Your Turn</span>
+                                    <strong>{secondsLeft ?? 0}s</strong>
+                                </div>
                             </section>
                         </section>
 
@@ -1790,6 +1897,57 @@ const Gameboard = () => {
                             }}
                         >
                             Leave Match (Forfeit)
+                        </button>
+                    </div>
+                </Overlay>
+            )}
+
+            {/* ── Removed from the match (e.g. too many missed turns) ── */}
+            {selfEliminated && !winner && !showExitOverlay && (
+                <Overlay>
+                    <div
+                        role='alertdialog'
+                        aria-labelledby='removed-title'
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 14,
+                            textAlign: 'center',
+                            padding: '28px 20px 20px',
+                            maxWidth: 340,
+                            borderRadius: 14,
+                            background: 'rgba(20, 8, 12, 0.96)',
+                            border: '1px solid rgba(255,24,58,0.35)',
+                        }}
+                    >
+                        <h2 id='removed-title' style={{ margin: 0, color: '#ff4d6a', fontSize: 21, fontWeight: 800 }}>
+                            You were removed from the match
+                        </h2>
+                        <p style={{ margin: 0, color: 'rgba(255,255,255,0.7)', fontSize: 14, lineHeight: 1.5 }}>
+                            {selfEliminated === 'inactivity'
+                                ? 'Your turn ran out too many times in a row, so you were removed from this match.'
+                                : 'You are no longer part of this match.'}
+                        </p>
+                        <button
+                            type='button'
+                            onClick={() => {
+                                setPlayerData(null);
+                                navigate('/lobby');
+                            }}
+                            style={{
+                                width: '100%',
+                                padding: '14px 0',
+                                borderRadius: 8,
+                                border: '1px solid rgba(76,255,136,0.5)',
+                                background: 'rgba(76,255,136,0.18)',
+                                color: '#4cff88',
+                                fontSize: 15,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Go to Lobby
                         </button>
                     </div>
                 </Overlay>

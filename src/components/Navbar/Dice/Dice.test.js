@@ -158,4 +158,13 @@ describe('Dice component', () => {
             }
         });
     });
+
+    it('never shows a die face in the idle dock view (no stale 6 after a move)', () => {
+        const { container } = render(
+            <Dice variant='dock' rolledNumber={6} nowMoving={false} movingPlayer='blue' playerColor='red' />
+        );
+        const img = container.querySelector('img');
+        expect(img).not.toBeNull();
+        expect(img.getAttribute('src')).toMatch(/roll/);
+    });
 });

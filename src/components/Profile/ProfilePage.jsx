@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate }         from 'react-router-dom';
+import { goBackToLudoHome } from '../BackToHome/BackToHome';
 import { useAuth }             from '../../context/AuthContext';
 import styles                  from './ProfilePage.module.css';
 
@@ -159,9 +160,9 @@ const ProfilePage = () => {
 
                 {/* ── HEADER: back + avatar ── */}
                 <div className={styles.cardHeader}>
-                    <button type='button' className={styles.backBtn} onClick={() => navigate('/lobby')}>
+                    <button type='button' className={styles.backBtn} onClick={() => goBackToLudoHome(navigate)}>
                         <ArrowLeftIcon />
-                        Back to Lobby
+                        Back to Ludo Home
                     </button>
 
                     <div className={styles.avatarRow}>

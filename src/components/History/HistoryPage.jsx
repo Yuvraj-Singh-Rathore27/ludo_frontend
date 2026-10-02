@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import GlobalNavbar from '../GlobalNavbar/GlobalNavbar';
+import BackToHome, { goBackToLudoHome } from '../BackToHome/BackToHome';
 import { useAuth } from '../../context/AuthContext';
 import styles from './HistoryPage.module.css';
 
@@ -127,6 +128,7 @@ const HistoryPage = () => {
             <GlobalNavbar activePage='history' />
 
             <main className={styles.body}>
+                <BackToHome />
                 <section className={styles.titleSection}>
                     <h1>Match History</h1>
                     <p>All completed matches - wins, losses, and payouts</p>
@@ -166,7 +168,7 @@ const HistoryPage = () => {
                         <div className={styles.emptyEmoji}>🎲</div>
                         <h2 className={styles.emptyTitle}>No matches yet</h2>
                         <p className={styles.emptySub}>Play your first match and it will appear here.</p>
-                        <button onClick={() => navigate('/lobby')} className={styles.emptyBtn}>
+                        <button onClick={() => goBackToLudoHome(navigate)} className={styles.emptyBtn}>
                             Find a Match
                         </button>
                     </div>

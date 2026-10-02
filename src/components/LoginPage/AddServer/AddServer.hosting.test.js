@@ -97,6 +97,22 @@ describe('AddServer — hosting a private room', () => {
         fireEvent.click(screen.getByText('Host Server'));
         expect(await screen.findByText('Insufficient balance')).toBeInTheDocument();
         expect(setPlayerData).not.toHaveBeenCalled();
+        // The room the host could not join is closed again, not left open and empty.
+        await waitFor(() =>
+            expect(axios.post).toHaveBeenCalledWith(
+                '/api/v1/rooms/cancel',
+                { roomId: 'ROOM_ABC123', reason: 'Host could not join' },
+                { headers: { Authorization: 'Bearer tok-123' } }
+            )
+        );
+    });
+
+    it('offers a retry when the entry fees fail to load, and recovers', async () => {
+        axios.get.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce({ data: { data: FEES } });
+        setup();
+        fireEvent.click(await screen.findByText('Try again'));
+        expect(await screen.findByText('₹10.00')).toBeInTheDocument();
+        expect(screen.queryByText(/Could not load entry fees/)).not.toBeInTheDocument();
     });
 
     it('enters the game as host from the created-room screen', async () => {

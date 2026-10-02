@@ -446,6 +446,7 @@
     position: absolute;
     z-index: 3;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: clamp(4px, 1vw, 6px);
     width: clamp(100px, 28vw, 170px);
@@ -478,6 +479,29 @@
     flex-direction: column;
     min-width: 0;
     line-height: 1.25;
+}
+
+/* Full username on its own line under avatar + dice, so it gets the badge's whole
+   width on every screen size; long names are cut with an ellipsis (full name in the
+   title tooltip). Always present, so every badge keeps one fixed height. */
+.playerBadgeName {
+    flex: 1 0 100%;
+    order: 10;
+    min-width: 0;
+    padding: 0 clamp(2px, 0.6vw, 4px) 1px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(9px, 2.6vw, 12px);
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.playerBadgeLeft {
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: line-through;
 }
 
 .playerBadgeYou {
@@ -1272,6 +1296,11 @@
         padding: 6px;
         gap: 6px;
         overflow: auto;
+        /* The browser's scroll anchoring re-scrolled this frame whenever something
+           above the anchor changed size mid-turn (dice, turn timer) — the "screen
+           jumps down when I roll". Content sizes are now fixed; this stops the rest. */
+        overflow-anchor: none;
+        overscroll-behavior: contain;
         border-radius: 0;
         background: transparent;
         border: none;

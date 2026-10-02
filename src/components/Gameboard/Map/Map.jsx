@@ -9,7 +9,7 @@ import { isValidPawnPosition } from './boardPath';
 import { planCaptureDelays } from './captureSequence';
 import { toneBoardPixels, STAR_FILL, STAR_STROKE } from './boardTone';
 import { getLocalPerspective, rotatePoint } from '../perspective';
-import { MIN_SPIN_MS, LANDING_MS, RESULT_HOLD_MS } from '../../Navbar/Dice/diceTiming';
+import { RESULT_HOLD_MS } from '../../Navbar/Dice/diceTiming';
 import { useAudioSettings } from '../../../context/AudioContext';
 import { playStep, playCapture } from './pawnSound';
 import styles from '../Gameboard.module.css';
@@ -19,11 +19,11 @@ const BOARD_SIZE = 460;
 // Minimum gap between board resync requests triggered by an illegal pawn payload.
 const RESYNC_THROTTLE_MS = 2000;
 
-// Auto-move waits for the dice's own spin -> land -> hold sequence to fully
-// finish (same fixed timing the dice component uses, plus a small buffer) so
-// a pawn never starts sliding while the dice is still visibly rolling — and
-// this delay never depends on pawn count or move count, only dice timing.
-const AUTO_MOVE_DELAY_MS = MIN_SPIN_MS + LANDING_MS + RESULT_HOLD_MS + 150;
+// `rolledNumber` only reaches the board once the dice has landed and shows its
+// value (Gameboard's pickableRoll). Auto-move then holds the result on screen a
+// moment longer (same hold the dice uses, plus a small buffer) before the token
+// starts — never while the dice is rolling, and never dependent on pawn count.
+const AUTO_MOVE_DELAY_MS = RESULT_HOLD_MS + 150;
 
 // ─── Movement animation timing ────────────────────────────────────────────────
 // A pawn hops cell by cell along the route it actually walks, so a 6 reads as
@@ -291,7 +291,10 @@ const drawStackBadge = (ctx, x, y, count, rotation) => {
     ctx.restore();
 };
 
-const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
+// rolledNumber: the roll tokens may be picked for — null until the dice has landed.
+// autoMoveEnabled: the roll was this player's own tap, so a single legal pawn may be
+// moved for them (a roll the server made on a timeout is left for the server to play).
+const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = true }) => {
     const player = useContext(PlayerDataContext);
     const socket = useContext(SocketContext);
 
@@ -716,7 +719,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
     const autoMovedForRef = useRef(null); // rolledNumber value already handled/scheduled
     const autoMoveTimerRef = useRef(null);
     useEffect(() => {
-        if (!nowMoving || !rolledNumber) {
+        if (!nowMoving || !rolledNumber || !autoMoveEnabled) {
             autoMovedForRef.current = null;
             if (autoMoveTimerRef.current) {
                 clearTimeout(autoMoveTimerRef.current);
@@ -741,7 +744,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber }) => {
             }
             socket.emit('game:move', pawnId, player.roomId);
         }, AUTO_MOVE_DELAY_MS);
-    }, [pawns, rolledNumber, nowMoving, player.color, player.roomId, socket]);
+    }, [pawns, rolledNumber, nowMoving, autoMoveEnabled, player.color, player.roomId, socket]);
 
     // Cleanup the auto-move timer on unmount only
     useEffect(() => {

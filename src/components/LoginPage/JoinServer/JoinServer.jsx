@@ -38,6 +38,17 @@ const openCount = pool => (pool.matches || []).filter(m => m.joinable).length;
 const filledCount = pool => (pool.matches || []).filter(m => !m.joinable).length;
 const waitingCount = pool => (pool.matches || []).filter(m => m.joinable).reduce((n, m) => n + m.joinedPlayers, 0);
 
+// A join failure (most often "Insufficient balance") stays on screen until the player
+// dismisses it or tries again — it is never cleared by a background list refresh.
+const JoinErrorBanner = ({ message, onDismiss }) => (
+    <div className={styles.joinErrorBanner} role='alert'>
+        <span>{message}</span>
+        <button type='button' aria-label='Dismiss' onClick={onDismiss}>
+            ×
+        </button>
+    </div>
+);
+
 const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     const setPlayerData = useContext(SetPlayerDataContext);
     const roomSocket = useContext(RoomSocketContext); // Fastify socket — pushes lobby changes
@@ -68,6 +79,11 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [joiningId, setJoiningId] = useState(null);
     const [roomError, setRoomError] = useState('');
+    // A failed join (e.g. "Insufficient balance") is kept apart from list-loading errors:
+    // the list refresh that follows every join attempt clears loading errors on success,
+    // and used to wipe the join message a moment after it appeared. It stays until the
+    // player tries again or dismisses it.
+    const [roomJoinError, setRoomJoinError] = useState('');
 
     // `quiet` is used by the background refresh: it must not flip the table back to its
     // loading state (the list would flicker while the player is reading it) and must not
@@ -105,7 +121,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
         const token = localStorage.getItem('ludo_token');
         if (!token) return;
         setJoiningId(room.roomId);
-        setRoomError('');
+        setRoomJoinError('');
         try {
             const idempotencyKey = randomId();
             const joinRes = await axios.post(
@@ -125,12 +141,12 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                     setPlayerData({ roomId: room.roomId, isHost: false, color });
                     return;
                 } catch {
-                    setRoomError('You have already joined this room, but it could not be reopened');
+                    setRoomJoinError('You have already joined this room, but it could not be reopened');
                     setJoiningId(null);
                     return;
                 }
             }
-            setRoomError(err.response?.data?.message || 'Failed to join room');
+            setRoomJoinError(err.response?.data?.message || 'Failed to join room');
             setJoiningId(null);
         }
     };
@@ -143,6 +159,9 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
     // Step 1 shows the entry fees; picking one opens step 2 with only that fee's matches.
     const [selectedPoolId, setSelectedPoolId] = useState(null);
     const [poolError, setPoolError]   = useState('');
+    // Same split as roomJoinError above: a failed Quick Match join (e.g. "Insufficient
+    // balance to join this room") survives the list reload that runs right after it.
+    const [poolJoinError, setPoolJoinError] = useState('');
 
     const poolsInFlight = useRef(false);
     const fetchPools = useCallback(async ({ quiet = false } = {}) => {
@@ -238,7 +257,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
         if (!token) return;
         setJoiningPoolId(pool.id);
         setJoiningMatchId(match ? match.roomId : null);
-        setPoolError('');
+        setPoolJoinError('');
         try {
             const idempotencyKey = randomId();
             const res = await axios.post(
@@ -250,7 +269,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
             setPlayerData({ roomId: room.roomId, isHost: !!isHost, color });
             onRoomsRefreshed?.();
         } catch (err) {
-            setPoolError(err.response?.data?.message || 'Failed to join pool');
+            setPoolJoinError(err.response?.data?.message || 'Failed to join pool');
             setJoiningPoolId(null);
             setJoiningMatchId(null);
             // A match may have just filled — reload so the list shows what is really open.
@@ -337,6 +356,9 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                     {tab === 'public' && publicMatchEnabled && (
                         <>
                             {roomError && <p style={{ color: '#ff4d6a', fontSize: 14, padding: '8px 16px', margin: 0 }}>{roomError}</p>}
+                            {roomJoinError && (
+                                <JoinErrorBanner message={roomJoinError} onDismiss={() => setRoomJoinError('')} />
+                            )}
                             <ServersTableWithLoading
                                 isLoading={isLoading}
                                 rooms={rooms}
@@ -350,6 +372,9 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                     {tab === 'pools' && (
                         <div className={styles.poolsContainer}>
                             {poolError && <p className={styles.codeError} style={{ textAlign: 'left', padding: '4px 0' }}>{poolError}</p>}
+                            {poolJoinError && (
+                                <JoinErrorBanner message={poolJoinError} onDismiss={() => setPoolJoinError('')} />
+                            )}
                             {poolsLoading ? (
                                 <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '28px 0', margin: 0, fontSize: 14 }}>
                                     Loading pools…
@@ -362,7 +387,14 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
                                 selectedPool ? (
                                     <div className={styles.poolGroup}>
                                         <div className={styles.poolDetailHead}>
-                                            <button type='button' className={styles.poolBack} onClick={() => setSelectedPoolId(null)}>
+                                            <button
+                                                type='button'
+                                                className={styles.poolBack}
+                                                onClick={() => {
+                                                    setSelectedPoolId(null);
+                                                    setPoolJoinError('');
+                                                }}
+                                            >
                                                 ‹ Back
                                             </button>
                                             <div className={styles.poolDetailTitle}>

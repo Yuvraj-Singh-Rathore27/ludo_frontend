@@ -36,6 +36,10 @@ const AddServer = ({ publicMatchEnabled = false }) => {
     const [feeRows, setFeeRows] = useState(null); // null = still loading
     const [feesError, setFeesError] = useState('');
     const [selectedFeeId, setSelectedFeeId] = useState('');
+    // Bumped by "Try again": the fee list used to load only once, so a single failed
+    // request (network blip, expired token mid-refresh) left Host Server dead until a
+    // full page reload.
+    const [feesReload, setFeesReload] = useState(0);
 
     useEffect(() => {
         if (!isPrivate) return;
@@ -49,11 +53,12 @@ const AddServer = ({ publicMatchEnabled = false }) => {
             setFeesError('Not logged in — please log in again to host a room');
             return undefined;
         }
+        setFeesError('');
         axios.get('/api/v1/pools/', { headers: { Authorization: `Bearer ${token}` } })
             .then(res => { if (alive) setFeeRows(res.data?.data || []); })
             .catch(() => { if (alive) setFeesError('Could not load entry fees. Please try again.'); });
         return () => { alive = false; };
-    }, [isPrivate]);
+    }, [isPrivate, feesReload]);
 
     // One button per distinct amount — two pools can share an amount (e.g. a "Gold"
     // and a "Silver" pool both at ₹10); which specific pool backs the button doesn't
@@ -96,6 +101,7 @@ const AddServer = ({ publicMatchEnabled = false }) => {
         setLoading(true);
         setError('');
 
+        let createdRoomId = null;
         try {
             const createRes = await axios.post(
                 '/api/v1/rooms/create',
@@ -104,7 +110,9 @@ const AddServer = ({ publicMatchEnabled = false }) => {
                     : { entryFee: entryFee.trim(), maxPlayers, isPrivate: false },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            const { roomId, roomCode } = createRes.data?.data;
+            const { roomId, roomCode } = createRes.data?.data || {};
+            if (!roomId) throw new Error('Room was not created');
+            createdRoomId = roomId;
 
             // randomId, not crypto.randomUUID — that one is missing on plain http too.
             const idempotencyKey = randomId();
@@ -113,6 +121,7 @@ const AddServer = ({ publicMatchEnabled = false }) => {
                 { roomId, idempotencyKey },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            createdRoomId = null; // joined — the room is the host's now
             const color = joinRes.data?.data?.color;
 
             if (isPrivate) {
@@ -122,6 +131,22 @@ const AddServer = ({ publicMatchEnabled = false }) => {
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create room');
+            // The room was created but the host could not join it (most often
+            // "Insufficient balance"). Close it so it doesn't sit open with nobody in
+            // it — each retry used to leave one more such room behind.
+            if (createdRoomId) {
+                const roomId = createdRoomId;
+                // Best effort, never allowed to mask the error shown above.
+                Promise.resolve()
+                    .then(() =>
+                        axios.post(
+                            '/api/v1/rooms/cancel',
+                            { roomId, reason: 'Host could not join' },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                        )
+                    )
+                    .catch(() => {});
+            }
         } finally {
             setLoading(false);
         }
@@ -188,7 +213,21 @@ const AddServer = ({ publicMatchEnabled = false }) => {
                         <div className={styles.privateContainer}>
                             <span>Entry Fee</span>
                             {feesError ? (
-                                <span style={{ color: '#ff4d6a', fontSize: 13 }}>{feesError}</span>
+                                <span style={{ color: '#ff4d6a', fontSize: 13 }}>
+                                    {feesError}
+                                    {localStorage.getItem('ludo_token') && (
+                                        <button
+                                            type='button'
+                                            className={styles.retryBtn}
+                                            onClick={() => {
+                                                setFeeRows(null);
+                                                setFeesReload(n => n + 1);
+                                            }}
+                                        >
+                                            Try again
+                                        </button>
+                                    )}
+                                </span>
                             ) : feeRows === null ? (
                                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Loading entry fees…</span>
                             ) : feeOptions.length === 0 ? (
