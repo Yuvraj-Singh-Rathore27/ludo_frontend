@@ -13,7 +13,7 @@ import { useAuth } from './AuthContext';
 
 const LaunchContext = createContext(null);
 
-const LAUNCH_API = `${process.env.REACT_APP_DABA_API_URL || 'https://dev-api.dabafantasy.com'}/api/auth/ludo/launch`;
+const LAUNCH_API = `${process.env.REACT_APP_DABA_API_URL || 'https://dev-api.dabaexchange.world'}/api/auth/ludo/launch`;
 
 const STORAGE_USER_ID_KEY = 'daba_user_id';
 const STORAGE_TOKEN_KEY   = 'daba_access_token';

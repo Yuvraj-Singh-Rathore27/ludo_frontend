@@ -359,7 +359,7 @@
 
 .boardGrid {
     display: grid;
-    grid-template-columns: minmax(210px, 260px) minmax(390px, min(42vw, 63vh, 520px));
+    grid-template-columns: minmax(210px, 260px) minmax(390px, min(42vw, calc(100dvh - 310px), 520px));
     grid-template-rows: repeat(4, minmax(0, 1fr));
     grid-template-areas:
         'red board'
@@ -2090,7 +2090,7 @@
 
     .boardGrid {
         display: grid;
-        grid-template-columns: minmax(210px, 260px) minmax(390px, min(42vw, 63vh, 520px));
+        grid-template-columns: minmax(210px, 260px) minmax(390px, min(42vw, calc(100dvh - 310px), 520px));
         grid-template-rows: repeat(4, minmax(0, 1fr));
         gap: clamp(10px, 1.25vw, 16px) clamp(22px, 2.8vw, 34px);
         width: auto;
