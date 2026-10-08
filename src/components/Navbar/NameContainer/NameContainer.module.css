@@ -102,3 +102,15 @@
         padding: 2px;
     }
 }
+
+/* Desktop: a compact avatar so the whole player badge stays small */
+@media (min-width: 900px) {
+    .container {
+        width: 46px;
+        height: 46px;
+    }
+
+    .container > p {
+        font-size: 20px;
+    }
+}

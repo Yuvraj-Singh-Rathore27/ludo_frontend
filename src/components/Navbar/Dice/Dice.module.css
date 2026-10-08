@@ -32,7 +32,16 @@
 
 /* Size-only placeholder (see DiceSlot in Dice.jsx) — takes the dock's space, shows nothing. */
 .slot {
-    visibility: hidden;
+    pointer-events: none;
+}
+
+.slotDie {
+    /* Blank die — no pips, so a waiting seat never looks like it rolled a number. */
+    width: 78%;
+    height: 78%;
+    border-radius: 20%;
+    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.5), rgba(180, 184, 196, 0.28) 72%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
 .resultDie,
@@ -66,10 +75,6 @@
     height: 100%;
 }
 
-.diceBounceWrap.spinning {
-    animation: diceShake 0.28s ease-in-out infinite;
-}
-
 .diceBounceWrap.landed {
     animation: diceImpact 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -89,11 +94,11 @@
 }
 
 .dice3d.spinning {
-    animation: diceTumble 0.7s linear infinite;
+    animation: diceTumble 0.6s linear infinite; /* keep = SPIN_CYCLE_MS */
 }
 
 .dice3d.landing {
-    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: transform 0.75s cubic-bezier(0.17, 0.67, 0.3, 1); /* keep = LANDING_MS */
 }
 
 .diceFace {
@@ -314,6 +319,19 @@
     cursor: wait;
 }
 
+/* Desktop: a compact dice, in step with the smaller player badge */
+@media (min-width: 900px) {
+    .dockContainer,
+    .dockContainer .rollButton {
+        width: 44px;
+        height: 44px;
+    }
+
+    .dockContainer {
+        --dice-half: 22px;
+    }
+}
+
 @media (max-width: 899px) {
     .cardContainer {
         display: none;
@@ -333,12 +351,12 @@
 @media (max-width: 620px) {
     .dockContainer,
     .dockContainer .rollButton {
-        width: clamp(46px, 15vw, 58px);
-        height: clamp(46px, 15vw, 58px);
+        width: clamp(34px, 10.5vw, 42px);
+        height: clamp(34px, 10.5vw, 42px);
     }
 
     .dockContainer {
-        --dice-half: clamp(23px, 7.5vw, 29px);
+        --dice-half: clamp(17px, 5.25vw, 21px);
     }
 
     .dockContainer .resultBadge {
@@ -354,12 +372,12 @@
 @media (max-width: 380px) {
     .dockContainer,
     .dockContainer .rollButton {
-        width: 52px;
-        height: 52px;
+        width: 36px;
+        height: 36px;
     }
 
     .dockContainer {
-        --dice-half: 26px;
+        --dice-half: 18px;
     }
 
     .dockContainer .resultBadge {
@@ -374,12 +392,12 @@
 @media (max-width: 380px) and (max-height: 700px) {
     .dockContainer,
     .dockContainer .rollButton {
-        width: 46px;
-        height: 46px;
+        width: 34px;
+        height: 34px;
     }
 
     .dockContainer {
-        --dice-half: 23px;
+        --dice-half: 17px;
     }
 
     .dockContainer .resultBadge {
@@ -393,7 +411,6 @@
 
 @media (prefers-reduced-motion: reduce) {
     .dice3d.spinning,
-    .diceBounceWrap.spinning,
     .diceBounceWrap.landed {
         animation: none;
     }

@@ -326,6 +326,9 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
     const ctxRef = useRef(null); // cached 2d context — not re-fetched on every event
     const touchableCentersRef = useRef({}); // pawn._id -> hit-area centre, for nearest-match picking
     const rafRef = useRef(null); // pending RAF handle for mousemove throttle
+    // Set when a tap/click has sent a move: the token is still on screen until the server
+    // answers, so hovering/emulated mouse events must not paint a landing ghost beside it.
+    const moveSentRef = useRef(false);
     const hintPawnRef = useRef(null); // mirrors hintPawn state without triggering renders
 
     // Animation bookkeeping. Kept entirely in refs so a running animation never
@@ -618,6 +621,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
                 // Room code rides along so the move still lands after a reconnect that
                 // lost the server-side session (the server verifies the seat either way).
                 socket.emit('game:move', target._id, player.roomId);
+                moveSentRef.current = true;
             }
 
             // Clear hint after move
@@ -632,7 +636,11 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
     // setHintPawn only called when the hovered pawn actually changes.
     const handleMouseMove = useCallback(
         event => {
-            if (!nowMoving || !rolledNumber) return;
+            if (!nowMoving || !rolledNumber || moveSentRef.current) return;
+            // Hover preview is a mouse-only affordance. A tap on a touch screen also
+            // fires emulated mouse events, which left a grey ghost token beside the
+            // token that was just tapped.
+            if (event.pointerType && event.pointerType !== 'mouse') return;
             if (rafRef.current) return; // already a frame pending — skip
 
             rafRef.current = requestAnimationFrame(() => {
@@ -687,6 +695,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
     // bails out early, so nothing cleared it until this player's next turn. It is
     // only valid for the current board, roll and turn, so drop it when any changes.
     useEffect(() => {
+        moveSentRef.current = false;
         if (hintPawnRef.current === null) return;
         hintPawnRef.current = null;
         setHintPawn(null);
@@ -760,7 +769,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
             height={BOARD_SIZE}
             ref={canvasRef}
             onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
+            onPointerMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={rotation ? { transform: `rotate(${rotation}deg)` } : undefined}
         />

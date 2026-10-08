@@ -83,7 +83,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    height: 100dvh;
+    height: 100%;
     min-height: 0;
     width: 100%;
     max-width: 100%;
@@ -474,11 +474,12 @@
     background: rgba(255, 255, 255, 0.04);
 }
 
+/* The viewer's own badge used to fit a "YOU" pill between avatar and dice, which pushed
+   the dice onto a second row and made that one box taller than the others. The pill is
+   pinned to the avatar's corner instead, and this wrapper dissolves so only a Ready
+   button (before the match starts) stays in the flex row. All four badges share a layout. */
 .playerBadgeInfo {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: 1.25;
+    display: contents;
 }
 
 /* Full username on its own line under avatar + dice, so it gets the badge's whole
@@ -505,6 +506,10 @@
 }
 
 .playerBadgeYou {
+    position: absolute;
+    top: -7px;
+    left: 2px;
+    z-index: 2;
     display: inline-block;
     margin-left: 0;
     padding: 1px clamp(3px, 1vw, 5px);
@@ -1064,7 +1069,7 @@
     }
 
     .gameFrame {
-        height: calc(100dvh - 20px);
+        height: 100%;
         min-height: 0;
         padding: 14px;
         gap: 10px;
@@ -1151,7 +1156,7 @@
 
     .boardGrid {
         width: 100%;
-        grid-template-columns: minmax(140px, 190px) minmax(300px, min(48vw, 54vh, 430px));
+        grid-template-columns: minmax(0, 190px) minmax(0, min(48vw, 54vh, 430px));
         grid-template-rows: repeat(4, minmax(0, 1fr));
         grid-template-areas:
             'red board'
@@ -1292,10 +1297,11 @@
 
     .gameFrame {
         width: 100%;
-        height: 100dvh;
+        height: 100%;
         padding: 6px;
         gap: 6px;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
         /* The browser's scroll anchoring re-scrolled this frame whenever something
            above the anchor changed size mid-turn (dice, turn timer) — the "screen
            jumps down when I roll". Content sizes are now fixed; this stops the rest. */
@@ -1463,8 +1469,13 @@
         align-items: center;
         padding: 30px 0 0; /* top strip reserved for .turnPrompt */
         margin: 0;
-        flex: 1;
-        min-height: 0;
+        flex: 1 0 auto;
+        min-height: auto;
+        /* One size for board, dice dock and footer. Width-limited first
+           (100% = frame content width), then height-limited so the whole game
+           fits tall phones, but never below 280px — short phones scroll the
+           frame instead of getting an unplayably small board. */
+        --board-size: min(100%, max(280px, calc(100dvh - 320px)), 480px);
     }
 
     .boardGrid {
@@ -1475,14 +1486,15 @@
         align-items: center;
         justify-content: center;
         gap: 0;
-        flex: 0 1 auto;
+        flex: 0 0 auto;
+        min-width: 0;
         min-height: 0;
         padding: 0;
     }
 
     .boardPanel {
-        width: calc(100vw - 12px);
-        max-width: 360px;
+        width: var(--board-size);
+        max-width: 100%;
         aspect-ratio: 1;
         border-radius: 14px;
         padding: 4px;
@@ -1512,8 +1524,8 @@
     }
 
     .rollDock {
-        width: calc(100vw - 12px);
-        max-width: 360px;
+        width: var(--board-size);
+        max-width: 100%;
         display: grid;
         grid-template-columns: 50px 1fr 80px;
         align-items: center;
@@ -1602,9 +1614,9 @@
     }
 
     .statusFooter {
-        width: calc(100vw - 12px);
-        max-width: 360px;
-        grid-template-columns: repeat(5, 1fr);
+        width: var(--board-size);
+        max-width: 100%;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         min-height: 32px;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1986,7 +1998,7 @@
     .gameFrame {
         padding: 6px;
         gap: 5px;
-        height: calc(100dvh - 6px);
+        height: 100%;
     }
 
     .gameHeader {
@@ -2068,7 +2080,7 @@
     .gameFrame {
         padding: 12px;
         gap: 12px;
-        height: calc(100dvh - 16px);
+        height: 100%;
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 16px;
         background: linear-gradient(160deg, rgba(18, 24, 40, 0.88), rgba(8, 11, 20, 0.94));
@@ -2077,22 +2089,32 @@
 
     .playArea {
         display: grid;
-        grid-template-columns: max-content minmax(230px, 280px);
-        justify-content: center;
+        /* Board in the true centre; the timer panel lives in the right-hand column and
+           the left column mirrors it as empty space, so the board never sits off-centre. */
+        grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+        justify-content: stretch;
         align-items: center;
         gap: clamp(18px, 2.8vw, 44px);
         flex: 1;
         min-height: 0;
         /* Must keep the .turnPrompt strip — this block is evaluated after the
            base rule, so a plain `padding` shorthand here would drop it. */
-        padding: clamp(30px, 2.4vw, 36px) 0 clamp(10px, 1.2vw, 16px);
+        /* Player badges hang ABOVE (top corners) and BELOW (bottom corners) the
+           board, outside its box, so the board area must reserve a badge-height
+           strip (~92px) on both sides — otherwise the top badges collide with
+           the header and the bottom badges are clipped off-screen. */
+        padding: 100px 0 100px;
     }
 
     .boardGrid {
+        grid-column: 2;
         display: grid;
-        grid-template-columns: minmax(210px, 260px) minmax(390px, min(42vw, calc(100dvh - 310px), 520px));
-        grid-template-rows: repeat(4, minmax(0, 1fr));
-        gap: clamp(10px, 1.25vw, 16px) clamp(22px, 2.8vw, 34px);
+        /* Single column: the old 210-260px left column was empty (badges are
+           positioned on the board's corners), which pushed the board off-centre. */
+        grid-template-columns: minmax(300px, min(42vw, calc(100dvh - 340px), 520px));
+        grid-template-rows: auto;
+        grid-template-areas: 'board';
+        gap: 0;
         width: auto;
         max-width: none;
     }
@@ -2106,17 +2128,57 @@
     }
 
     .actionDock {
+        grid-column: 3;
+        justify-self: start;
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         place-items: center;
         gap: 0;
         width: 100%;
+        max-width: 240px;
         min-height: auto;
         margin: 0;
-        padding: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0;
+        border: 0;
         border-radius: 18px;
-        background: rgba(4, 7, 11, 0.90);
+        background: transparent;
+    }
+
+    /* The side column now holds the turn countdown (it was an empty black pill). The
+       element stays rendered and just turns invisible off-turn, so nothing shifts. */
+    .turnTimer {
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 69, 75, 0.45);
+        border-radius: 16px;
+        background: rgba(40, 8, 12, 0.85);
+        box-shadow: 0 0 24px rgba(255, 69, 75, 0.18);
+        text-align: center;
+    }
+
+    .turnTimer span {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .turnTimer strong {
+        color: #ff454b;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    /* Badges are 150px wide on desktop (not 170) so the centred "Roll the dice" pill
+       between the two top badges is no longer hidden behind them. */
+    .playerBadge {
+        width: 132px;
+        justify-content: center;
     }
 
     .rollDock {
@@ -2240,7 +2302,7 @@
     }
 
     .boardGrid {
-        grid-template-columns: minmax(160px, 200px) minmax(350px, min(45vw, 56vh, 460px));
+        grid-template-columns: minmax(0, 200px) minmax(0, min(45vw, 56vh, 460px));
         gap: clamp(12px, 2vw, 20px);
     }
 
@@ -2396,13 +2458,7 @@
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (max-height: 600px) and (max-width: 768px) {
     .gameFrame {
-        height: calc(100dvh - clamp(8px, 1.3vw, 20px));
-    }
-
-    .playArea {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
+        height: 100%;
     }
 
     .boardGrid {
@@ -2438,5 +2494,53 @@
     body {
         -webkit-font-smoothing: subpixel-antialiased;
         text-rendering: optimizeSpeed;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* MOBILE / TABLET SCROLLING — must stay last so it wins the cascade           */
+/* The frame is the one scroll container: the page never scrolls sideways and  */
+/* children never shrink to fit (which made content overlap instead of scroll).*/
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 899px) {
+    .gameFrame {
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overflow-anchor: none;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .gameFrame > * {
+        flex-shrink: 0;
+        min-width: 0;
+    }
+
+    .playArea {
+        flex: 1 0 auto;
+        min-height: auto;
+        min-width: 0;
+        overflow: visible;
+    }
+
+    .boardGrid {
+        min-width: 0;
+    }
+}
+
+/* Phones: the board only has ~10px of side margin, so badges hung 6-16px outside
+   the board corners crossed the screen edge. Keep them flush with the board. */
+@media (max-width: 620px) {
+    .playerBadge {
+        --corner-offset: 0px;
+    }
+}
+
+/* Landscape phones: 54vh made the board ~210px. The frame scrolls vertically
+   here, so give the board a playable size instead of shrinking it to fit. */
+@media (min-width: 621px) and (max-width: 899px) and (max-height: 500px) {
+    .boardGrid {
+        grid-template-columns: minmax(0, 190px) minmax(0, min(48vw, 340px));
     }
 }

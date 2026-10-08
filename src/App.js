@@ -11,6 +11,7 @@ import WalletPage      from './components/Wallet/WalletPage';
 import HistoryPage     from './components/History/HistoryPage';
 import SignupScreen    from './components/Auth/SignupScreen/SignupScreen';
 import AuthLoginScreen from './components/Auth/AuthLoginScreen/AuthLoginScreen';
+import ConnectionBanner from './components/ConnectionBanner/ConnectionBanner';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WalletProvider }        from './context/WalletContext';
 import { AudioProvider }         from './context/AudioContext';
@@ -172,6 +173,7 @@ const AppRoutes = () => {
         <SetPlayerDataContext.Provider value={setPlayerData}>
         <RoomSocketContext.Provider value={roomSocket}>
         <SocketContext.Provider value={playerSocket}>
+            {loggedIn ? <ConnectionBanner socket={playerSocket} /> : null}
             <Routes>
                 {/* ── AUTH SCREENS ── */}
                 <Route

@@ -3,7 +3,7 @@ import { PlayerDataContext, SocketContext } from '../../../App';
 import images from '../../../constants/diceImages';
 import diceSound from '../../../images/dice/dice.mp3';
 import styles from './Dice.module.css';
-import { MIN_SPIN_MS, LANDING_MS, RESULT_HOLD_MS, NO_MOVE_HOLD_MS } from './diceTiming';
+import { SPIN_CYCLE_MS, MIN_SPIN_MS, LANDING_MS, RESULT_HOLD_MS, NO_MOVE_HOLD_MS } from './diceTiming';
 
 // 3D dice roll — a real 6-sided cube (not face-swapping) built from the
 // existing 1.png..6.png images. Opposite faces sum to 7, like a real die:
@@ -33,7 +33,7 @@ const getDiceAudio = () => {
 // keeps going, never reverses) ending exactly on the rolled face.
 const buildLandTransform = rolledNumber => {
     const target = FACE_LANDING_ROTATION[rolledNumber] || FACE_LANDING_ROTATION[1];
-    const turns = () => 2 + Math.floor(Math.random() * 2); // 2-3 extra full turns
+    const turns = () => 1 + Math.floor(Math.random() * 2); // 1-2 extra full turns
     const x = target.x + 360 * turns();
     const y = target.y + 360 * turns();
     const z = 360 * turns(); // Z has no face meaning — always resolves to a clean multiple
@@ -222,7 +222,11 @@ const Dice = ({
         setPhaseSafe('spinning');
 
         const elapsed = Date.now() - spinStartRef.current;
-        const wait = Math.max(0, MIN_SPIN_MS - elapsed);
+        // Land only when the looping spin is back at its start pose (a whole number of
+        // cycles), so the cube eases straight into the landing instead of snapping.
+        // A slow server reply just means a few more smooth cycles, never a visible jump.
+        const cycles = Math.max(MIN_SPIN_MS / SPIN_CYCLE_MS, Math.ceil(elapsed / SPIN_CYCLE_MS));
+        const wait = Math.max(0, cycles * SPIN_CYCLE_MS - elapsed);
 
         after(wait, myId, () => {
             landTransformRef.current = buildLandTransform(capturedResultRef.current);
@@ -337,12 +341,12 @@ const Dice = ({
     );
 };
 
-// An invisible stand-in with exactly the dock dice's footprint (same classes, so the
-// sizes stay in step at every breakpoint). Player badges hold it while someone else has
-// the dice, so a badge never changes size as the dice moves between corners.
+// A dimmed die with exactly the dock dice's footprint (same classes, so the sizes stay in
+// step at every breakpoint). Player badges hold it while someone else has the dice, so a
+// badge never changes size as the dice moves between corners and every seat shows its dice.
 export const DiceSlot = () => (
     <div className={`${styles.container} ${styles.dockContainer} ${styles.slot}`} aria-hidden='true'>
-        <span />
+        <span className={styles.slotDie} />
     </div>
 );
 
