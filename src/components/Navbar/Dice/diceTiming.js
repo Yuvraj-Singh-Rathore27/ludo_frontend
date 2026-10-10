@@ -8,9 +8,9 @@
 // One full tumble of the looping spin keyframe (Dice.module.css diceTumble). The cube is back at
 // its start pose at every multiple of this, so landing is only started on such a boundary —
 // starting mid-cycle made the cube snap back to its start pose, which read as a stutter/loop.
-export const SPIN_CYCLE_MS = 600;
-export const MIN_SPIN_MS = 2 * SPIN_CYCLE_MS; // 3D spin before it's allowed to land
-export const LANDING_MS = 750; // gradual slowdown into the final face
+export const SPIN_CYCLE_MS = 900;
+export const MIN_SPIN_MS = SPIN_CYCLE_MS; // 3D spin before it's allowed to land
+export const LANDING_MS = 800; // gradual slowdown into the final face
 export const RESULT_HOLD_MS = 450; // show the landed face before evaluating what's next
 export const NO_MOVE_HOLD_MS = 900; // "No move available" message hold
 

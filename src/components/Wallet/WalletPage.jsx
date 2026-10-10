@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate }         from 'react-router-dom';
 import { useWallet }           from '../../context/WalletContext';
 import { useAuth }             from '../../context/AuthContext';
 import GlobalNavbar            from '../GlobalNavbar/GlobalNavbar';
@@ -14,7 +13,6 @@ const ArrowUp    = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' st
 const ClockIcon  = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 3'/></svg>;
 const SpinIcon   = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2.4' strokeLinecap='round' stroke='currentColor' className={styles.spin}><path d='M21 12a9 9 0 1 1-6.22-8.56'/></svg>;
 const DepositIcon = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/><path d='M12 14v3M9 16l3 3 3-3'/></svg>;
-const WithdrawIcon = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/><path d='M12 17v-3M9 13l3-3 3 3'/></svg>;
 const TrophyIcon = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><path d='M8 4h8v5c0 3-1.7 5-4 5s-4-2-4-5V4z'/><path d='M8 6H4v2c0 2.2 1.7 4 4 4M16 6h4v2c0 2.2-1.7 4-4 4'/><path d='M12 14v4M8 20h8M10 17h4'/></svg>;
 const LockIcon   = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>;
 const GiftIcon   = () => <svg viewBox='0 0 24 24' fill='none' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor'><rect x='3' y='8' width='18' height='14' rx='2'/><path d='M3 13h18M12 8v13'/><path d='M12 8C12 8 9 5 7 5a2 2 0 0 0 0 4c2 0 5-1 5-1z'/><path d='M12 8C12 8 15 5 17 5a2 2 0 0 1 0 4c-2 0-5-1-5-1z'/></svg>;
@@ -74,10 +72,8 @@ const TxRow = ({ tx }) => {
 ═══════════════════════════════════════════════════════════ */
 const TABS           = ['deposit', 'withdraw', 'history'];
 const PAGE_SIZE      = 6;
-const PAGINATE_AFTER = 6;
 
 const WalletPage = () => {
-    const navigate = useNavigate();
     const { balance, history, balLoading, histLoading, fetchHistory, deposit, withdraw } = useWallet();
     const { authUser } = useAuth();
     // DABBA launch: money is managed in DABBA, so the wallet only shows the balance —

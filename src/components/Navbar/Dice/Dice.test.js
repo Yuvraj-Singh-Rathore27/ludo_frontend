@@ -1,3 +1,14 @@
+// jsdom has no canvas, which lottie-web needs at import time
+jest.mock('lottie-web/build/player/lottie_light', () => ({
+    loadAnimation: () => ({
+        destroy: () => {},
+        setSpeed: () => {},
+        setSubframe: () => {},
+        playSegments: () => {},
+        goToAndStop: () => {},
+    }),
+}));
+
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -28,7 +39,7 @@ describe('Dice component', () => {
         props.movingPlayer = MOVING_PLAYER;
         props.playerColor = MOVING_PLAYER;
         render(<Dice {...props} />);
-        expect(screen.queryByAltText(props.rolledNumber)).toBeInTheDocument();
+        expect(screen.queryByLabelText(`Dice ${props.rolledNumber}`)).toBeInTheDocument();
     });
 
     it('should not render rolledNumber next to not moving player', () => {
@@ -36,7 +47,7 @@ describe('Dice component', () => {
         props.movingPlayer = MOVING_PLAYER;
         props.playerColor = NOT_MOVING_PLAYER;
         render(<Dice {...props} />);
-        expect(screen.queryByAltText(props.rolledNumber)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(`Dice ${props.rolledNumber}`)).not.toBeInTheDocument();
     });
 
     it('should render roll icon next to moving player', () => {

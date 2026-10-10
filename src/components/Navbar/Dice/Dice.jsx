@@ -2,20 +2,10 @@ import React, { useContext, useEffect, useRef, useState, useCallback } from 'rea
 import { PlayerDataContext, SocketContext } from '../../../App';
 import images from '../../../constants/diceImages';
 import diceSound from '../../../images/dice/dice.mp3';
+import lottie from 'lottie-web/build/player/lottie_light';
+import diceAnimation from '../../../animations/ludo_dice.json';
 import styles from './Dice.module.css';
 import { SPIN_CYCLE_MS, MIN_SPIN_MS, LANDING_MS, RESULT_HOLD_MS, NO_MOVE_HOLD_MS } from './diceTiming';
-
-// 3D dice roll — a real 6-sided cube (not face-swapping) built from the
-// existing 1.png..6.png images. Opposite faces sum to 7, like a real die:
-// front=1/back=6, right=3/left=4, top=2/bottom=5.
-const FACE_LANDING_ROTATION = {
-    1: { x: 0, y: 0 },
-    2: { x: -90, y: 0 },
-    3: { x: 0, y: -90 },
-    4: { x: 0, y: 90 },
-    5: { x: 90, y: 0 },
-    6: { x: 0, y: 180 },
-};
 
 const SAFETY_TIMEOUT_MS = 6000;
 
@@ -29,53 +19,89 @@ const getDiceAudio = () => {
     return sharedDiceAudio;
 };
 
-// Builds the cube's final transform: a few extra full turns (so the motion
-// keeps going, never reverses) ending exactly on the rolled face.
-const buildLandTransform = rolledNumber => {
-    const target = FACE_LANDING_ROTATION[rolledNumber] || FACE_LANDING_ROTATION[1];
-    const turns = () => 1 + Math.floor(Math.random() * 2); // 1-2 extra full turns
-    const x = target.x + 360 * turns();
-    const y = target.y + 360 * turns();
-    const z = 360 * turns(); // Z has no face meaning — always resolves to a clean multiple
-    return `rotateX(${x}deg) rotateY(${y}deg) rotateZ(${z}deg)`;
-};
-
 // diceImages.js layout: [faces 1..6, roll]. The roll button uses the same image.
 const ROLL_IMAGE_INDEX = 6;
 
 const SETTLED_PHASES = new Set(['landing', 'landed', 'noMove']);
 
-const DiceCube = ({ phase, landTransform }) => (
-    <div className={`${styles.diceBounceWrap} ${phase === 'landed' ? styles.landed : ''}`}>
-        <div className={styles.diceScene}>
-            <div
-                className={`${styles.dice3d} ${phase === 'spinning' ? styles.spinning : ''} ${
-                    phase === 'landing' ? styles.landing : ''
-                }`}
-                style={SETTLED_PHASES.has(phase) ? { transform: landTransform } : undefined}
-            >
-                <div className={`${styles.diceFace} ${styles.faceFront}`}>
-                    <img src={images[0]} alt='1' />
-                </div>
-                <div className={`${styles.diceFace} ${styles.faceBack}`}>
-                    <img src={images[5]} alt='6' />
-                </div>
-                <div className={`${styles.diceFace} ${styles.faceRight}`}>
-                    <img src={images[2]} alt='3' />
-                </div>
-                <div className={`${styles.diceFace} ${styles.faceLeft}`}>
-                    <img src={images[3]} alt='4' />
-                </div>
-                <div className={`${styles.diceFace} ${styles.faceTop}`}>
-                    <img src={images[1]} alt='2' />
-                </div>
-                <div className={`${styles.diceFace} ${styles.faceBottom}`}>
-                    <img src={images[4]} alt='5' />
-                </div>
-            </div>
+// Lottie dice (animations/ludo_dice.json): six 45-frame segments, segment N ends on face N.
+// Inside a segment, frames 4-28 are one full tumble (random faces) and 28-40 the final
+// slowdown onto the real face, so: while waiting for the server we loop the tumble, and the
+// landing plays ONLY the slowdown from where the loop ends — playing the whole segment
+// would tumble a second time. Landing is stretched to fit LANDING_MS (diceTiming.js).
+const SEGMENT_FRAMES = 45;
+const TUMBLE_START = 4;
+const TUMBLE_END = 28;
+const LAND_END = 40;
+const LOTTIE_FPS = 30;
+const segmentStart = result => (Math.min(6, Math.max(1, result || 1)) - 1) * SEGMENT_FRAMES;
+
+const DiceCube = ({ phase, result }) => {
+    const hostRef = useRef(null);
+    const animRef = useRef(null);
+    // Read by the phase effect below but deliberately not a dependency: the result arriving
+    // mid-tumble must not restart the tumble.
+    const resultRef = useRef(result);
+    resultRef.current = result;
+
+    useEffect(() => {
+        let anim = null;
+        try {
+            anim = lottie.loadAnimation({
+                container: hostRef.current,
+                renderer: 'svg',
+                loop: false,
+                autoplay: false,
+                animationData: diceAnimation,
+                // Crop the 320x320 canvas to the die so it fills its box (overflow stays visible for the hop)
+                rendererSettings: { preserveAspectRatio: 'xMidYMid meet', viewBoxSize: '80 100 160 160' },
+            });
+        } catch {
+            /* animation unavailable (e.g. no SVG support) — the result badge still shows */
+        }
+        // The art is authored at 30 fps. Without this lottie re-renders the whole SVG on every
+        // display refresh (60-120 Hz) between those frames; on a weak CPU that wasted work is
+        // what drops frames. Time still drives playback, so a slow device skips frames
+        // instead of running the roll slower.
+        if (anim) anim.setSubframe(false);
+        animRef.current = anim;
+        return () => {
+            animRef.current = null;
+            if (anim) anim.destroy();
+        };
+    }, []);
+
+    useEffect(() => {
+        const anim = animRef.current;
+        if (!anim) return;
+        try {
+            if (phase === 'spinning') {
+                anim.loop = true;
+                anim.setSpeed(((TUMBLE_END - TUMBLE_START) / LOTTIE_FPS) * (1000 / SPIN_CYCLE_MS));
+                anim.playSegments([TUMBLE_START, TUMBLE_END], true);
+            } else if (phase === 'landing') {
+                const start = segmentStart(resultRef.current);
+                anim.loop = false;
+                anim.setSpeed(((LAND_END - TUMBLE_END) / LOTTIE_FPS) * (1000 / LANDING_MS));
+                anim.playSegments([start + TUMBLE_END, start + LAND_END], true);
+            } else {
+                // goToAndStop counts from the active segment's first frame, not frame 0 — so
+                // make the held frame its own one-frame segment, then show that segment's start.
+                const held = segmentStart(resultRef.current) + SEGMENT_FRAMES - 1;
+                anim.playSegments([held, held + 1], true);
+                anim.goToAndStop(0, true);
+            }
+        } catch {
+            /* ignore — purely visual */
+        }
+    }, [phase]);
+
+    return (
+        <div className={`${styles.diceBounceWrap} ${phase === 'landed' ? styles.landed : ''}`}>
+            <div ref={hostRef} className={styles.lottieDice} role='img' aria-label={result ? `Dice ${result}` : 'Dice'} />
         </div>
-    </div>
-);
+    );
+};
 
 // Every step of the animation is guarded by a monotonic "roll id" instead of
 // several booleans that have to stay in sync — a step only acts if its id is
@@ -99,7 +125,6 @@ const Dice = ({
 
     const rollIdRef = useRef(0);
     const spinStartRef = useRef(null);
-    const landTransformRef = useRef('none');
     const capturedResultRef = useRef(null);
     // True once the landing sequence has been scheduled for the roll in
     // flight — independent of `phase`, which flips to 'spinning' optimistically
@@ -229,7 +254,6 @@ const Dice = ({
         const wait = Math.max(0, cycles * SPIN_CYCLE_MS - elapsed);
 
         after(wait, myId, () => {
-            landTransformRef.current = buildLandTransform(capturedResultRef.current);
             setPhaseSafe('landing');
 
             after(LANDING_MS, myId, () => {
@@ -300,7 +324,7 @@ const Dice = ({
             {isCurrentPlayer ? (
                 phase !== 'idle' ? (
                     <span className={styles.resultWrap}>
-                        <DiceCube phase={phase} landTransform={landTransformRef.current} />
+                        <DiceCube phase={phase} result={capturedResultRef.current} />
                         {SETTLED_PHASES.has(phase) ? (
                             <span className={styles.resultBadge} aria-hidden='true'>
                                 {capturedResultRef.current}
