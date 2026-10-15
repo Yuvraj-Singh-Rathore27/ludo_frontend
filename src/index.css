@@ -10,31 +10,37 @@ html {
 body {
     min-height: 100%;
     margin: 0;
-    background:
-        radial-gradient(circle at 50% 8%, rgba(155, 8, 31, 0.34), transparent 38%),
-        radial-gradient(circle at 8% 84%, rgba(90, 2, 18, 0.38), transparent 34%),
-        radial-gradient(circle at 96% 48%, rgba(190, 12, 35, 0.28), transparent 26%),
-        linear-gradient(145deg, rgba(2, 0, 2, 0.92), rgba(22, 1, 8, 0.9) 42%, rgba(68, 2, 15, 0.78)),
-        url('./images/pages/bg-1.webp') center / cover fixed no-repeat;
+    background: #030003;
     color: #f8fbff;
     overflow-x: hidden;
     overflow-y: auto;
 }
 
+/* Whole-app backdrop on ONE fixed layer behind the content. It is painted once and kept
+   on the GPU; the old `background-attachment: fixed` on body (photo + gradients) plus a
+   separate full-screen overlay were repainted on every scroll frame. Grid/glow alphas
+   are the former overlay's values x its 0.82 opacity. */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
+    z-index: -1;
     pointer-events: none;
     background:
-        linear-gradient(90deg, rgba(255, 80, 94, 0.05) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(255, 80, 94, 0.035) 1px, transparent 1px),
-        radial-gradient(circle at 16% 14%, rgba(255, 76, 90, 0.12), transparent 26%),
-        radial-gradient(circle at 52% 42%, rgba(210, 13, 48, 0.18), transparent 31%),
-        radial-gradient(circle at 82% 12%, rgba(202, 14, 46, 0.16), transparent 25%),
-        radial-gradient(circle at 72% 86%, rgba(55, 1, 12, 0.42), transparent 31%);
-    background-size: 42px 42px, 42px 42px, auto, auto, auto;
-    opacity: 0.82;
+        linear-gradient(90deg, rgba(255, 80, 94, 0.041) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255, 80, 94, 0.029) 1px, transparent 1px),
+        radial-gradient(circle at 16% 14%, rgba(255, 76, 90, 0.098), transparent 26%),
+        radial-gradient(circle at 52% 42%, rgba(210, 13, 48, 0.148), transparent 31%),
+        radial-gradient(circle at 82% 12%, rgba(202, 14, 46, 0.131), transparent 25%),
+        radial-gradient(circle at 72% 86%, rgba(55, 1, 12, 0.344), transparent 31%),
+        radial-gradient(circle at 50% 8%, rgba(155, 8, 31, 0.34), transparent 38%),
+        radial-gradient(circle at 8% 84%, rgba(90, 2, 18, 0.38), transparent 34%),
+        radial-gradient(circle at 96% 48%, rgba(190, 12, 35, 0.28), transparent 26%),
+        linear-gradient(145deg, rgba(2, 0, 2, 0.92), rgba(22, 1, 8, 0.9) 42%, rgba(68, 2, 15, 0.78)),
+        url('./images/pages/bg-1.webp') center / cover no-repeat;
+    background-size: 42px 42px, 42px 42px, auto, auto, auto, auto, auto, auto, auto, auto, cover;
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 #root {

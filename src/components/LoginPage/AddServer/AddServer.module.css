@@ -186,7 +186,7 @@
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.18s;
+    transition: background-color 0.18s, border-color 0.18s, color 0.18s, opacity 0.18s;
 }
 
 .roomTypeBtn:hover {
