@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { memo, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import GlobalNavbar from '../GlobalNavbar/GlobalNavbar';
@@ -27,7 +27,11 @@ const fmtDate = iso => {
 
 const abs = n => Math.abs(parseFloat(n || 0)).toFixed(2);
 
-const MatchRow = ({ match }) => {
+// Pages already fetched this session, so revisiting History (or paging back) paints
+// instantly while a fresh copy loads quietly in the background.
+const pageCache = new Map();
+
+const MatchRow = memo(({ match }) => {
     const res = RESULT_CONFIG[match.result] || RESULT_CONFIG.LOST;
     const profit = parseFloat(match.profit || 0);
     const isWon = match.result === 'WON';
@@ -74,7 +78,7 @@ const MatchRow = ({ match }) => {
             </div>
         </article>
     );
-};
+});
 
 const HistoryPage = () => {
     // DABBA launch: no bottom bar, so no bottom space is reserved for it (see .dabbaPage).
@@ -93,7 +97,13 @@ const HistoryPage = () => {
     const fetchHistory = useCallback(async (p = 1) => {
         if (abortRef.current) abortRef.current.abort();
         abortRef.current = new AbortController();
-        setLoading(true);
+        const cached = pageCache.get(p);
+        if (cached) {
+            setMatches(cached.matches); setTotal(cached.total); setPages(cached.pages); setPage(p);
+            setLoading(false);
+        } else {
+            setLoading(true);
+        }
         setError('');
         try {
             const token = localStorage.getItem('ludo_token');
@@ -102,13 +112,15 @@ const HistoryPage = () => {
                 signal: abortRef.current.signal,
             });
             const d = res.data?.data;
-            setMatches(d?.matches || []);
-            setTotal(d?.total || 0);
-            setPages(d?.totalPages || 1);
+            const next = { matches: d?.matches || [], total: d?.total || 0, pages: d?.totalPages || 1 };
+            pageCache.set(p, next);
+            setMatches(next.matches);
+            setTotal(next.total);
+            setPages(next.pages);
             setPage(p);
         } catch (e) {
             if (axios.isCancel(e) || e.name === 'CanceledError') return;
-            setError(e.response?.data?.message || 'Failed to load match history.');
+            if (!cached) setError(e.response?.data?.message || 'Failed to load match history.');
         } finally {
             setLoading(false);
         }
@@ -119,9 +131,11 @@ const HistoryPage = () => {
         return () => { if (abortRef.current) abortRef.current.abort(); };
     }, [fetchHistory]);
 
-    const won = matches.filter(m => m.result === 'WON').length;
-    const lost = matches.filter(m => m.result !== 'WON').length;
-    const totalProfit = matches.reduce((acc, m) => acc + parseFloat(m.profit || 0), 0);
+    const { won, lost, totalProfit } = useMemo(() => ({
+        won: matches.filter(m => m.result === 'WON').length,
+        lost: matches.filter(m => m.result !== 'WON').length,
+        totalProfit: matches.reduce((acc, m) => acc + parseFloat(m.profit || 0), 0),
+    }), [matches]);
 
     return (
         <div className={`${styles.page} ${isDabbaUser ? styles.dabbaPage : ''}`}>

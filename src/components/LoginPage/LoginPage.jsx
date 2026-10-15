@@ -258,10 +258,6 @@ const LoginPage = () => {
                             <Icon type='bolt' className={styles.heroBtnIcon} />
                             Quick Match
                         </button>
-                        <button type='button' className={styles.heroBtnOutline}>
-                            <Icon type='gamepad' className={styles.heroBtnIcon} />
-                            Browse Rooms
-                        </button>
                     </div>
                 </div>
                 <picture>

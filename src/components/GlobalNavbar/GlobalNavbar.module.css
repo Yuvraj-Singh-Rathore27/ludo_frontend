@@ -20,9 +20,7 @@
     min-height: 88px;
     padding: 0 28px 0 26px;
     border-bottom: 1px solid rgba(255, 24, 58, 0.3);
-    background: linear-gradient(105deg, rgba(120, 8, 26, 0.55) 0%, rgba(18, 2, 8, 0.78) 50%, rgba(8, 1, 4, 0.88) 100%);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: linear-gradient(105deg, rgba(120, 8, 26, 0.92) 0%, rgba(18, 2, 8, 0.96) 50%, rgba(8, 1, 4, 0.98) 100%);
     box-shadow:
         0 1px 0 rgba(255, 24, 58, 0.22),
         0 4px 40px rgba(0, 0, 0, 0.5),
@@ -948,8 +946,6 @@
         align-items: stretch;
         border-top: 1px solid rgba(255, 24, 58, 0.28);
         background: linear-gradient(180deg, rgba(14, 2, 8, 0.97) 0%, rgba(6, 1, 4, 0.99) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
         box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
     }
 

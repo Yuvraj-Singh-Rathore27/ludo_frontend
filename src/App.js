@@ -63,8 +63,9 @@ const AppRoutes = () => {
             return;
         }
 
-        setLoading(true);
-
+        // Only a page reload with an existing session waits on the socket (see the
+        // initial `loading` state). A fresh login must NOT flip this on after the lobby
+        // has already rendered — that unmounted and remounted the whole dashboard.
         const socket = io(`http://${window.location.hostname}:8081`, {
             withCredentials: true,
             // WebSocket first, polling only as a fallback (same as the room socket
@@ -121,7 +122,7 @@ const AppRoutes = () => {
             setLoading(false);
         });
 
-        const timeout = setTimeout(() => setLoading(false), 2000);
+        const timeout = setTimeout(() => setLoading(false), 1000);
 
         return () => {
             clearTimeout(timeout);
