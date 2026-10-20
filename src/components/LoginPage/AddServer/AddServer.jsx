@@ -60,6 +60,25 @@ const AddServer = ({ publicMatchEnabled = false }) => {
         return () => { alive = false; };
     }, [isPrivate, feesReload]);
 
+    // Admin-set min/max for Private Room. When both are set the host types an amount
+    // inside the range instead of tapping a fixed fee; when not set (or the lookup fails)
+    // the fee buttons above are used exactly as before. The server re-checks the range.
+    const [feeRange, setFeeRange] = useState(null); // { min, max } strings, or null
+    const [customFee, setCustomFee] = useState('');
+    useEffect(() => {
+        if (!isPrivate) return undefined;
+        const token = localStorage.getItem('ludo_token');
+        if (!token) return undefined;
+        let alive = true;
+        Promise.resolve(axios.get('/api/v1/rooms/private-fee-range', { headers: { Authorization: `Bearer ${token}` } }))
+            .then(res => {
+                const { min, max } = res?.data?.data || {};
+                if (alive) setFeeRange(typeof min === 'string' && typeof max === 'string' ? { min, max } : null);
+            })
+            .catch(() => { if (alive) setFeeRange(null); });
+        return () => { alive = false; };
+    }, [isPrivate]);
+
     // One button per distinct amount — two pools can share an amount (e.g. a "Gold"
     // and a "Silver" pool both at ₹10); which specific pool backs the button doesn't
     // matter here, since a Private Room never joins a Quick Match pool.
@@ -85,7 +104,14 @@ const AddServer = ({ publicMatchEnabled = false }) => {
         // Private Room instead requires a fee picked from the admin-approved list —
         // the actual amount is resolved server-side from entryFeeId (see
         // room.controller.createRoom), never from anything typed here.
-        if (isPrivate) {
+        if (isPrivate && feeRange) {
+            const fee = customFee.trim();
+            if (!/^\d+(\.\d{1,2})?$/.test(fee)) { setError('Enter a valid entry fee (e.g. 10)'); return; }
+            if (Number(fee) < Number(feeRange.min) || Number(fee) > Number(feeRange.max)) {
+                setError(`Entry fee must be between ₹${feeRange.min} and ₹${feeRange.max}`);
+                return;
+            }
+        } else if (isPrivate) {
             if (!selectedFeeId) { setError('Select an entry fee'); return; }
         } else {
         const fee = entryFee.trim();
@@ -106,7 +132,9 @@ const AddServer = ({ publicMatchEnabled = false }) => {
             const createRes = await axios.post(
                 '/api/v1/rooms/create',
                 isPrivate
-                    ? { entryFeeId: selectedFeeId, maxPlayers, isPrivate: true }
+                    ? (feeRange
+                        ? { entryFee: customFee.trim(), maxPlayers, isPrivate: true }
+                        : { entryFeeId: selectedFeeId, maxPlayers, isPrivate: true })
                     : { entryFee: entryFee.trim(), maxPlayers, isPrivate: false },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -212,7 +240,22 @@ const AddServer = ({ publicMatchEnabled = false }) => {
                         // state above. Nothing here is ever sent as a raw money value.
                         <div className={styles.privateContainer}>
                             <span>Entry Fee</span>
-                            {feesError ? (
+                            {feeRange ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                                    <input
+                                        type='text'
+                                        inputMode='decimal'
+                                        aria-label='Entry fee'
+                                        placeholder={`₹${feeRange.min} – ₹${feeRange.max}`}
+                                        value={customFee}
+                                        onChange={e => { setCustomFee(e.target.value); setError(''); }}
+                                        style={{ width: 150 }}
+                                    />
+                                    <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>
+                                        Min ₹{feeRange.min} · Max ₹{feeRange.max}
+                                    </span>
+                                </div>
+                            ) : feesError ? (
                                 <span style={{ color: '#ff4d6a', fontSize: 13 }}>
                                     {feesError}
                                     {localStorage.getItem('ludo_token') && (
@@ -333,13 +376,13 @@ const AddServer = ({ publicMatchEnabled = false }) => {
                     )}
 
                     {/* Say why the button is greyed out instead of leaving it silently dead. */}
-                    {isPrivate && !selectedFeeId && !loading && feeOptions.length > 0 && (
+                    {isPrivate && !feeRange && !selectedFeeId && !loading && feeOptions.length > 0 && (
                         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: -8 }}>
                             Select an entry fee to host.
                         </span>
                     )}
 
-                    <button type='submit' disabled={loading || (isPrivate && !selectedFeeId)}>
+                    <button type='submit' disabled={loading || (isPrivate && (feeRange ? !customFee.trim() : !selectedFeeId))}>
                         {loading ? 'Creating...' : 'Host Server'}
                     </button>
                 </form>
