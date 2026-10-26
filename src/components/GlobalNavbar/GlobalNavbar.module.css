@@ -1271,3 +1271,31 @@
         display: flex;
     }
 }
+
+/* Phones: history + sound + wallet + profile (each forced to >=44px on touch screens)
+   plus the desktop 18px gaps filled the whole bar, so the brand column (1fr, which
+   may shrink to 0) collapsed and "LUDO" slid under the icons — worst with a long
+   balance. Tighten the gaps and keep the brand inside its own column: the row is
+   exactly one logo tall and wraps, so "LUDO" shows whenever it fits whole and
+   otherwise wraps onto a hidden second line, leaving just the dice logo. */
+@media (max-width: 480px) {
+    .wallet {
+        gap: clamp(4px, 1.6vw, 8px);
+    }
+
+    .brandRow {
+        flex-wrap: wrap;
+        height: clamp(28px, 8vw, 36px);
+        overflow: hidden;
+    }
+
+    .brandText {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 360px) {
+    .brandRow {
+        height: 26px;
+    }
+}

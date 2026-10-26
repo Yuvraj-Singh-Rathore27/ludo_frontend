@@ -233,7 +233,7 @@ const GlobalNavbar = ({ activePage = 'home' }) => {
                     <div className={styles.logoWrap}>
                         <img src={logoDice} alt='Ludo Arena' />
                     </div>
-                    <div>
+                    <div className={styles.brandText}>
                         <strong>LUDO</strong>
                         <span>ARENA</span>
                     </div>

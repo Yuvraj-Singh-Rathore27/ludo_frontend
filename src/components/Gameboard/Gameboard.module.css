@@ -428,6 +428,13 @@
     background: rgba(11, 13, 17, 0.5);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     touch-action: manipulation;
+    /* The whole board is one clickable canvas, so mobile browsers flashed their tap
+       highlight over the entire board on every token tap. Long-press also selected
+       the canvas or opened the "save image" menu. */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     /* Own compositor layer: the board repaints every frame while a pawn hops, and
        without this a software-rendered canvas (common on budget Android) drags the
        board panel's large blurred box-shadow into every one of those repaints. */
@@ -2517,15 +2524,32 @@
         min-width: 0;
     }
 
+    /* The top badges hang above the board, so the strip above it must be at least
+       one badge tall (plus its 2px margin) — not just the 30px the turn pill needs,
+       or they overlap the stats row. --badge-top-h / --badge-bottom-h are measured
+       in Gameboard.jsx; the fallbacks cover the first paint before measurement.
+       The board shrinks by the extra reserve so more phones fit without scroll, but
+       never below two top badges (28vw each) plus the centred turn pill (~120px),
+       which would otherwise be covered by them. */
     .playArea {
         flex: 1 0 auto;
         min-height: auto;
         min-width: 0;
         overflow: visible;
+        --badge-reserve: max(30px, calc(var(--badge-top-h, 80px) + 6px));
+        padding-top: var(--badge-reserve);
+        --board-size: min(100%, max(280px, calc(56vw + 128px), calc(100dvh - 290px - var(--badge-reserve))), 480px);
     }
 
     .boardGrid {
         min-width: 0;
+    }
+
+    /* Same for the bottom badges: the dock under the board is at least one badge
+       tall, so they never cover whatever follows it. */
+    .actionDock {
+        min-height: calc(var(--badge-bottom-h, 80px) + 4px);
+        justify-content: flex-start;
     }
 }
 
@@ -2537,10 +2561,23 @@
     }
 }
 
-/* Landscape phones: 54vh made the board ~210px. The frame scrolls vertically
-   here, so give the board a playable size instead of shrinking it to fit. */
-@media (min-width: 621px) and (max-width: 899px) and (max-height: 500px) {
+/* Tablets, unfolded foldables (Galaxy Z Fold inner screen) and landscape phones.
+   The grid kept an empty 190-200px left column from the old side player list
+   (badges now sit on the board corners), which squeezed the board to ~217px on a
+   Fold and made the 170px badges overlap each other. Single board column like
+   desktop; height-limited so both badge strips (top + bottom) still fit, but the
+   frame scrolls before the board drops under a playable 320px (landscape phones). */
+@media (min-width: 621px) and (max-width: 899px) {
     .boardGrid {
-        grid-template-columns: minmax(0, 190px) minmax(0, min(48vw, 340px));
+        grid-template-columns: min(62vw, max(320px, calc(100dvh - 260px - 2 * var(--badge-reserve))), 520px);
+        grid-template-rows: auto;
+        grid-template-areas: 'board';
+        justify-content: center;
+    }
+
+    /* Desktop's badge width: two of them plus the centred turn pill fit the board. */
+    .playerBadge {
+        width: 132px;
+        justify-content: center;
     }
 }

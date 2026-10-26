@@ -631,6 +631,33 @@ const Gameboard = () => {
     // Lazily-created — avoids loading the sound file before it's ever needed
     const homeAudioRef = useRef(null);
 
+    // Player badges hang outside the board (above the top corners, below the bottom
+    // ones). Their real height depends on the phone's width, font scaling and display
+    // zoom (Samsung's defaults are larger), so a fixed CSS reserve let the top badges
+    // ride up over the Room ID / Players / Prize row on some devices. Measure them and
+    // expose the heights as CSS variables the play area reserves room for.
+    const playAreaRef = useRef(null);
+    const badgeObserverRef = useRef(null);
+    useEffect(() => () => badgeObserverRef.current?.disconnect(), []);
+    useEffect(() => {
+        const area = playAreaRef.current;
+        if (!area || typeof ResizeObserver === 'undefined') return;
+        // Reads the ref (not `area`) so the shared observer follows a remounted play area.
+        const measure = () => {
+            const current = playAreaRef.current;
+            if (!current) return;
+            const tallest = selector =>
+                Math.max(0, ...Array.from(current.querySelectorAll(selector), b => b.offsetHeight));
+            current.style.setProperty('--badge-top-h', `${tallest(`.${styles.playerBadgeTL}, .${styles.playerBadgeTR}`)}px`);
+            current.style.setProperty('--badge-bottom-h', `${tallest(`.${styles.playerBadgeBL}, .${styles.playerBadgeBR}`)}px`);
+        };
+        if (!badgeObserverRef.current) badgeObserverRef.current = new ResizeObserver(measure);
+        // Badges mount as players join, so (re)observe the current set every render;
+        // observe() is a no-op for elements already observed.
+        area.querySelectorAll(`.${styles.playerBadge}`).forEach(b => badgeObserverRef.current.observe(b));
+        measure();
+    });
+
     const startCountdown = useCallback((playerId, playerName, seconds) => {
         if (countdownIntervalsRef.current[playerId]) {
             clearInterval(countdownIntervalsRef.current[playerId]);
@@ -1412,7 +1439,7 @@ const Gameboard = () => {
                         </section>
 
                         {/* ── PLAY AREA ── */}
-                        <section className={styles.playArea}>
+                        <section className={styles.playArea} ref={playAreaRef}>
                             <section className={styles.boardGrid}>
                                 <div
                                     className={`${styles.boardPanel} ${nowMoving ? styles.yourTurnBoard : ''} ${
