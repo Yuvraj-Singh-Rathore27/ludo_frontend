@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useContext, useCallback } from 'react';
 import { PlayerDataContext, SocketContext } from '../../../App';
 import mapImage from '../../../images/map.jpg';
 import positionMapCoords from '../positions';
@@ -326,10 +326,6 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
     const ctxRef = useRef(null); // cached 2d context — not re-fetched on every event
     const touchableCentersRef = useRef({}); // pawn._id -> hit-area centre, for nearest-match picking
     const rafRef = useRef(null); // pending RAF handle for mousemove throttle
-    // Set when a tap/click has sent a move: the token is still on screen until the server
-    // answers, so hovering/emulated mouse events must not paint a landing ghost beside it.
-    const moveSentRef = useRef(false);
-    const hintPawnRef = useRef(null); // mirrors hintPawn state without triggering renders
 
     // Animation bookkeeping. Kept entirely in refs so a running animation never
     // re-renders React — only the canvas repaints.
@@ -339,8 +335,6 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
     const prevPositionsRef = useRef(null); // pawnId -> last rendered position
     const animationsRef = useRef({}); // pawnId -> { cells, perHop, lift, start }
     const drawRafRef = useRef(null);
-
-    const [hintPawn, setHintPawn] = useState(null);
 
     // Movement SFX follow the existing mute toggle in the global navbar, and are
     // read through a ref so the paint loop never needs rebuilding when it flips.
@@ -379,17 +373,15 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
         const now = performance.now();
         let stillAnimating = false;
 
-        const blit = (color, x, y, alpha, scale) => {
+        const blit = (color, x, y, scale) => {
             const sprite = sprites[color];
             if (!sprite) return;
-            if (alpha !== undefined) ctx.globalAlpha = alpha;
             if (scale === undefined || scale === 1) {
                 ctx.drawImage(sprite, x - SPRITE_CENTER, y - SPRITE_CENTER);
             } else {
                 const size = SPRITE_SIZE * scale;
                 ctx.drawImage(sprite, x - size / 2, y - size / 2, size, size);
             }
-            if (alpha !== undefined) ctx.globalAlpha = 1;
         };
 
         const { slots, counts } = buildStackSlots(pawnsRef.current, rotationRef.current);
@@ -461,7 +453,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
 
         // Moving tokens last — a travelling piece stays on top of the board.
         tokens.sort((a, b) => a.moving - b.moving || a.y - b.y);
-        tokens.forEach(token => blit(token.color, token.x, token.y, undefined, token.scale));
+        tokens.forEach(token => blit(token.color, token.x, token.y, token.scale));
 
         // Count badge on every shared cell, so the stack size is readable at a
         // glance without having to pick the overlap apart.
@@ -471,14 +463,6 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
             const badge = rotatePoint(BADGE_OFFSET, -BADGE_OFFSET, 0, 0, -rotationRef.current);
             drawStackBadge(ctx, x + badge.x, y + badge.y, counts[position], rotationRef.current);
         });
-
-        // Ghost hint pawn — semi-transparent preview of where the pawn will land.
-        // Suppressed mid-animation so it never competes with a moving token.
-        const hint = hintPawnRef.current;
-        if (hint && !stillAnimating) {
-            const { x, y } = positionMapCoords[hint.position];
-            blit(hint.color, x, y, 0.45);
-        }
 
         return stillAnimating;
     }, []);
@@ -548,7 +532,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
         scheduleFrame();
     }, [pawns, rotation, scheduleFrame]);
 
-    // Repaint for non-movement reasons (hover hint, perspective change), and
+    // Repaint for non-movement reasons (perspective change), and
     // once more whenever a piece of artwork finishes decoding on first load.
     // paint() draws nothing until the board AND every pawn image are ready, but
     // only the board image used to trigger a repaint — so when the pawns finished
@@ -561,7 +545,7 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
         const onLoad = () => scheduleFrame();
         pending.forEach(img => img.addEventListener('load', onLoad, { once: true }));
         return () => pending.forEach(img => img.removeEventListener('load', onLoad));
-    }, [hintPawn, rotation, scheduleFrame]);
+    }, [rotation, scheduleFrame]);
 
     // Which token a canonical-space point is aimed at: the nearest accepted token
     // whose centre is within `radius`. Hover and click both go through this, which
@@ -621,25 +605,21 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
                 // Room code rides along so the move still lands after a reconnect that
                 // lost the server-side session (the server verifies the seat either way).
                 socket.emit('game:move', target._id, player.roomId);
-                moveSentRef.current = true;
             }
-
-            // Clear hint after move
-            hintPawnRef.current = null;
-            setHintPawn(null);
         },
         [pawnAtPoint, pawns, player.color, player.roomId, rolledNumber, socket, rotation]
     );
 
     // ── Mouse move handler ─────────────────────────────────────────────────────
-    // Throttled to one RAF per frame — prevents canvas redraws on every mouse pixel.
-    // setHintPawn only called when the hovered pawn actually changes.
+    // Throttled to one RAF per frame. Only swaps the cursor over a movable pawn —
+    // no landing preview is painted, so hovering never repaints the board.
     const handleMouseMove = useCallback(
         event => {
-            if (!nowMoving || !rolledNumber || moveSentRef.current) return;
-            // Hover preview is a mouse-only affordance. A tap on a touch screen also
-            // fires emulated mouse events, which left a grey ghost token beside the
-            // token that was just tapped.
+            const canvas = canvasRef.current;
+            if (!nowMoving || !rolledNumber) {
+                if (canvas) canvas.style.cursor = 'default';
+                return;
+            }
             if (event.pointerType && event.pointerType !== 'mouse') return;
             if (rafRef.current) return; // already a frame pending — skip
 
@@ -656,57 +636,17 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
                 const rawY = (event.clientY - rect.top) * scaleY;
                 const { x, y } = rotatePoint(rawX, rawY, canvas.width / 2, canvas.height / 2, -rotation);
 
-                let found = false;
                 const hovered = pawnAtPoint(
                     x,
                     y,
                     pawn => player.color === pawn.color && canPawnMove(pawn, rolledNumber, pawns),
                     hitRadiusFor(rect, canvas)
                 );
-                if (hovered) {
-                    const pawnPosition = getPositionAfterMove(hovered, rolledNumber);
-                    if (pawnPosition) {
-                        canvas.style.cursor = 'pointer';
-                        // Only trigger re-render when the hovered pawn changes
-                        if (hintPawnRef.current?.id !== hovered._id) {
-                            const next = { id: hovered._id, position: pawnPosition, color: 'grey' };
-                            hintPawnRef.current = next;
-                            setHintPawn(next);
-                        }
-                        found = true;
-                    }
-                }
-
-                if (!found) {
-                    canvas.style.cursor = 'default';
-                    if (hintPawnRef.current !== null) {
-                        hintPawnRef.current = null;
-                        setHintPawn(null);
-                    }
-                }
+                canvas.style.cursor = hovered ? 'pointer' : 'default';
             });
         },
         [nowMoving, rolledNumber, pawnAtPoint, pawns, player.color, rotation]
     );
-
-    // The hint was only ever cleared by a click or by hovering off a pawn. A move
-    // that happens without a click (auto-move, the server's timeout move) left the
-    // ghost stuck on the board, and once the turn passed the mouse-move handler
-    // bails out early, so nothing cleared it until this player's next turn. It is
-    // only valid for the current board, roll and turn, so drop it when any changes.
-    useEffect(() => {
-        moveSentRef.current = false;
-        if (hintPawnRef.current === null) return;
-        hintPawnRef.current = null;
-        setHintPawn(null);
-        if (canvasRef.current) canvasRef.current.style.cursor = 'default';
-    }, [pawns, nowMoving, rolledNumber]);
-
-    const handleMouseLeave = useCallback(() => {
-        if (hintPawnRef.current === null) return;
-        hintPawnRef.current = null;
-        setHintPawn(null);
-    }, []);
 
     // Cancel any pending frames on unmount to prevent stale-closure callbacks
     useEffect(() => {
@@ -770,7 +710,6 @@ const Map = ({ pawns: boardPawns, nowMoving, rolledNumber, autoMoveEnabled = tru
             ref={canvasRef}
             onClick={handleCanvasClick}
             onPointerMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
             style={rotation ? { transform: `rotate(${rotation}deg)` } : undefined}
         />
     );
