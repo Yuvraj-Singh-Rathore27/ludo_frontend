@@ -121,7 +121,7 @@ const normalizeUserInfo = (userId, userInfo) => {
 };
 
 export const LaunchProvider = ({ children }) => {
-    const { authUser, loginWithDaba } = useAuth();
+    const { authUser, loginWithDaba, logout } = useAuth();
     const [credentials] = useState(consumeUrlCredentials);
     const [launchUser, setLaunchUser] = useState(readStoredInfo);
     // True while a DABBA launch link is logging in to Ludo — routes wait instead of
@@ -129,6 +129,42 @@ export const LaunchProvider = ({ children }) => {
     // (Encrypted launch: the user is unknown until the backend decrypts, so always wait.)
     // Set when an encrypted launch link is rejected (expired / tampered / not verified).
     const [dabaLaunchError, setDabaLaunchError] = useState(null);
+    // Testing Mode: the backend refused this DABBA user (code TEST_001). Shows the
+    // "Ludo Coming Soon!" screen instead of the lobby; there is no way past it.
+    const [testModeBlocked, setTestModeBlocked] = useState(false);
+    const blockForTestMode = useCallback(() => {
+        setTestModeBlocked(true);
+        // An older Ludo login on this device must not open the lobby behind the screen.
+        if (authUser) logout();
+    }, [authUser, logout]);
+
+    // Testing Mode for a player who is ALREADY logged in (e.g. admin removed them, or turned
+    // Testing Mode on, after they entered): checked on every app load / reload. The backend never
+    // blocks a player who is still seated in a match, so a reload mid-game goes back to the game.
+    const authUserId = authUser?.id;
+    useEffect(() => {
+        if (!authUserId) return;
+        const token = safeGet('ludo_token');
+        if (!token) return;
+        let alive = true;
+        axios.get('/api/v1/auth/test-mode', { headers: { Authorization: `Bearer ${token}` } })
+            .then(({ data: body }) => { if (alive && body?.data?.blocked) setTestModeBlocked(true); })
+            .catch(() => { /* older backend or offline: never block on a failed check */ });
+        return () => { alive = false; };
+    }, [authUserId]);
+
+    // ...and while they are in the app: the moment any request (Quick Match, create / join room,
+    // join by code) is refused for Testing Mode, switch to the same full screen.
+    useEffect(() => {
+        const id = axios.interceptors.response.use(
+            res => res,
+            err => {
+                if (err?.response?.data?.code === 'TEST_001') setTestModeBlocked(true);
+                return Promise.reject(err);
+            },
+        );
+        return () => axios.interceptors.response.eject(id);
+    }, []);
     const [dabaLoginPending, setDabaLoginPending] = useState(() =>
         credentials.fromUrl &&
         (!!credentials.launchData ||
@@ -161,7 +197,9 @@ export const LaunchProvider = ({ children }) => {
                 })
                 .catch(err => {
                     console.log('Ludo login error:', err.message);
-                    setDabaLaunchError(err.message);
+                    // Testing Mode: keep ?data= in the address bar so a refresh checks again.
+                    if (err.code === 'TEST_001') blockForTestMode();
+                    else setDabaLaunchError(err.message);
                 })
                 .finally(() => setDabaLoginPending(false));
             return;
@@ -193,7 +231,10 @@ export const LaunchProvider = ({ children }) => {
                 created:    result?.data?.created,
                 balance:    result?.data?.balance,
             }))
-            .catch(err => console.log('Ludo login error:', err.message)) // no Ludo login → normal Login page
+            .catch(err => {
+                console.log('Ludo login error:', err.message); // no Ludo login → normal Login page
+                if (err.code === 'TEST_001') blockForTestMode();
+            })
             .finally(() => setDabaLoginPending(false));
     }, [credentials]); // eslint-disable-line react-hooks/exhaustive-deps -- run once per launch
 
@@ -210,8 +251,8 @@ export const LaunchProvider = ({ children }) => {
     }, []);
 
     const value = useMemo(
-        () => ({ launchUser, dabaLoginPending, dabaLaunchError, dismissLaunchError, clearLaunch }),
-        [launchUser, dabaLoginPending, dabaLaunchError, dismissLaunchError, clearLaunch],
+        () => ({ launchUser, dabaLoginPending, dabaLaunchError, testModeBlocked, dismissLaunchError, clearLaunch }),
+        [launchUser, dabaLoginPending, dabaLaunchError, testModeBlocked, dismissLaunchError, clearLaunch],
     );
 
     return (
@@ -222,7 +263,7 @@ export const LaunchProvider = ({ children }) => {
 };
 
 const NO_LAUNCH = {
-    launchUser: null, dabaLoginPending: false, dabaLaunchError: null,
+    launchUser: null, dabaLoginPending: false, dabaLaunchError: null, testModeBlocked: false,
     dismissLaunchError: () => {}, clearLaunch: () => {},
 };
 

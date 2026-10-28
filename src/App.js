@@ -41,6 +41,34 @@ const LaunchError = ({ onContinue }) => (
     </main>
 );
 
+// Testing Mode: shown to a DABBA player who is not on the admin's allowed list. No way into
+// the lobby from here; "Back to DABBA" leaves the game page.
+const goBackToDabba = () => {
+    if (window.history.length > 1) window.history.back();
+    else window.close();
+};
+const TestModeScreen = () => (
+    <main className={loaderStyles.container} role='alert'>
+        <div className={loaderStyles.card}>
+            <div style={{ fontSize: 44, lineHeight: 1 }} aria-hidden='true'>🛠️</div>
+            <div className={loaderStyles.copy}>
+                <h1>Ludo Coming Soon! 🎲</h1>
+                <p>Get ready for the fun! Ludo will be available soon. Stay tuned and get ready to roll the dice!</p>
+            </div>
+            <button
+                type='button'
+                onClick={goBackToDabba}
+                style={{
+                    marginTop: 8, padding: '10px 22px', borderRadius: 8, border: 'none',
+                    background: '#ffd670', color: '#1a0d00', fontWeight: 800, cursor: 'pointer',
+                }}
+            >
+                Back to DABBA
+            </button>
+        </div>
+    </main>
+);
+
 export const PlayerDataContext    = createContext();
 export const SetPlayerDataContext = createContext();
 export const SocketContext        = createContext();
@@ -48,7 +76,7 @@ export const RoomSocketContext    = createContext(); // new Fastify socket (port
 
 const AppRoutes = () => {
     const { authUser } = useAuth();
-    const { dabaLoginPending, dabaLaunchError, dismissLaunchError } = useLaunch();
+    const { dabaLoginPending, dabaLaunchError, testModeBlocked, dismissLaunchError } = useLaunch();
     const loggedIn = !!authUser;
 
     const [playerData,   setPlayerData]   = useState(null);
@@ -159,6 +187,11 @@ const AppRoutes = () => {
     // DABBA launch link: wait for the Ludo login instead of bouncing to the Login page.
     if (dabaLoginPending) {
         return <GlobalLoader title='Loading Ludo Arena' message='Logging you in...' />;
+    }
+
+    // Testing Mode: this DABBA player is not allowed in yet.
+    if (testModeBlocked) {
+        return <TestModeScreen />;
     }
 
     // DABBA launch link rejected (expired / tampered / not verified by DABBA).

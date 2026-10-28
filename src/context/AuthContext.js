@@ -37,6 +37,7 @@ const apiCall = async fn => {
         if (backendMsg) {
             const e = new Error(backendMsg);
             e.data  = err.response.data.data;
+            e.code  = err.response.data.code; // e.g. 'TEST_001' = Testing Mode, player not allowed
             throw e;
         }
         throw err;
