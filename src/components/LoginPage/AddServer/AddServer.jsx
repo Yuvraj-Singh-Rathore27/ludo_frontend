@@ -232,7 +232,7 @@ const AddServer = ({ publicMatchEnabled = false }) => {
 
     return (
         <WindowLayout
-            title='Host A Server'
+            title='Play with Friends'
             content={
                 <form className={styles.formContainer} onSubmit={handleSubmit}>
                     {isPrivate ? (

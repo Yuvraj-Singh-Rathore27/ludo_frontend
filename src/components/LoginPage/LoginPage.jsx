@@ -243,7 +243,10 @@ const LoginPage = () => {
                 <div className={styles.heroText}>
                     <p className={styles.heroPill}>
                         <Icon type='bolt' className={styles.heroPillIcon} />
-                        {stats.playersOnline !== null ? stats.playersOnline.toLocaleString() : '—'} players online now
+                        {/* {stats.playersOnline !== null ? stats.playersOnline.toLocaleString() : '—'} players online now */}
+                        {stats.playersOnline !== null
+    ? (stats.playersOnline + 200).toLocaleString()
+    : '—'} players online now
                     </p>
                     <h1>
                         Play the <span className={styles.boardText}>board.</span>
@@ -267,7 +270,7 @@ const LoginPage = () => {
             </section>
 
             {/* ── STATS STRIP ── */}
-            <section className={styles.stats}>
+            {/* <section className={styles.stats}>
                 <article>
                     <Icon type='players' className={styles.statSvgIcon} />
                     <div>
@@ -289,10 +292,10 @@ const LoginPage = () => {
                         <span>Quick Join</span>
                     </div>
                 </article>
-            </section>
+            </section> */}
 
             {/* ── RESUME ROOM BANNER (fixed overlay — always visible) ── */}
-            {activeRoom && (
+            {/* {activeRoom && (
                 <div
                     style={{
                         position: 'fixed',
@@ -363,7 +366,149 @@ const LoginPage = () => {
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
+
+
+            
+{/* ── STATS STRIP ── */}
+<section className={styles.stats}>
+    <article>
+        <Icon type="players" className={styles.statSvgIcon} />
+        <div>
+            <strong>
+                {stats.playersOnline !== null
+                    ? (stats.playersOnline + 200).toLocaleString()
+                    : '—'}
+            </strong>
+            <span>Players Online</span>
+        </div>
+    </article>
+
+    <article>
+        <Icon type="rooms" className={styles.statSvgIcon} />
+        <div>
+            <strong>
+                {stats.activeRooms !== null
+                    ? (stats.activeRooms + 20).toLocaleString()
+                    : '—'}
+            </strong>
+            <span>Active Rooms</span>
+        </div>
+    </article>
+
+    <article>
+        <Icon type="bolt" className={styles.statSvgIcon} />
+        <div>
+            <strong>Fast Match</strong>
+            <span>Quick Join</span>
+        </div>
+    </article>
+</section>
+
+{/* ── RESUME ROOM BANNER ── */}
+{activeRoom && (
+    <div
+        style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            padding: '16px 24px',
+            borderRadius: 14,
+            background:
+                'linear-gradient(135deg, rgba(20,10,0,0.97) 0%, rgba(40,20,0,0.97) 100%)',
+            border: '1.5px solid rgba(255, 160, 40, 0.6)',
+            boxShadow: '0 8px 40px rgba(255,160,40,0.25)',
+            flexWrap: 'wrap',
+            maxWidth: 600,
+            width: 'calc(100vw - 48px)',
+        }}
+    >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 26 }}>⚡</span>
+
+            <div>
+                <div
+                    style={{
+                        color: '#ffa028',
+                        fontWeight: 800,
+                        fontSize: 15,
+                        marginBottom: 3,
+                    }}
+                >
+                    You have an active room!
+                </div>
+
+                <div
+                    style={{
+                        color: 'rgba(255,255,255,0.65)',
+                        fontSize: 12,
+                    }}
+                >
+                    {activeRoom.roomId} &nbsp;·&nbsp; ₹
+                    {activeRoom.entryFee} entry &nbsp;·&nbsp;
+                    {activeRoom.joinedPlayers}/{activeRoom.maxPlayers} players
+                    &nbsp;·&nbsp;
+                    {activeRoom.isHost
+                        ? 'You are the host'
+                        : `Color: ${activeRoom.color}`}
+                </div>
+            </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+            <button
+                type="button"
+                onClick={() =>
+                    setPlayerData({
+                        roomId: activeRoom.roomId,
+                        isHost: activeRoom.isHost,
+                        color: activeRoom.color,
+                    })
+                }
+                style={{
+                    padding: '10px 22px',
+                    borderRadius: 8,
+                    background: '#ffa028',
+                    color: '#000',
+                    fontWeight: 800,
+                    fontSize: 14,
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                Resume Room
+            </button>
+
+            <button
+                type="button"
+                onClick={() => {
+                    dismissedRef.current = true;
+                    setActiveRoom(null);
+                }}
+                style={{
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: 'rgba(255,255,255,0.07)',
+                    color: 'rgba(255,255,255,0.45)',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    cursor: 'pointer',
+                }}
+            >
+                Dismiss
+            </button>
+        </div>
+    </div>
+)}
+
 
             {/* ── MOBILE QUICK-MATCH (hidden on desktop) ── */}
             <button className={styles.quickMatch} type='button' onClick={goToQuickMatch}>
@@ -380,7 +525,7 @@ const LoginPage = () => {
                 >
                     <Icon type='gamepad' className={styles.navSvgIcon} />
                     {/* DABBA: "Join A Server" is shown as "Join Room" */}
-                    {isDabbaUser ? 'Join Room' : 'Join A Server'}
+                    {isDabbaUser ? 'Join Room' : 'Join A Game'}
                 </button>
                 {/* DABBA: Host A Server tab hidden (normal users still see it) */}
                 {!hideHostAndCode && (
@@ -390,7 +535,7 @@ const LoginPage = () => {
                         type='button'
                     >
                         <Icon type='crown' className={styles.navSvgIcon} />
-                        Host A Server
+                       Play with Friends
                     </button>
                 )}
             </div>

@@ -307,7 +307,7 @@ const JoinServer = ({ onRoomsRefreshed, publicMatchEnabled = false }) => {
 
     return (
         <WindowLayout
-            title={isDabbaUser ? 'Join Room' : 'Join A Server'}
+            title={isDabbaUser ? 'Join Room' : 'Join A Game'}
             titleComponent={
                 // The list keeps itself up to date; this stays for an on-demand refresh
                 // and spins while a request is in flight so a tap visibly does something.
